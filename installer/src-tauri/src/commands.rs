@@ -151,10 +151,11 @@ pub async fn get_disk_info(path: String) -> Result<DiskInfo, String> {
 
 // ── open_agent_login ────────────────────────────────────────────────────────
 
-/// Open the agent-login page in the default browser.
+/// Open the agent-login page in the default browser (Next.js web UI, typically :3000).
 #[tauri::command]
-pub async fn open_agent_login(server_url: String) -> Result<(), String> {
-    let url = format!("{}/agent-login", server_url.trim_end_matches('/'));
+pub async fn open_agent_login(web_base_url: String) -> Result<(), String> {
+    let base = web_base_url.trim_end_matches('/');
+    let url = format!("{}/agent-login", base);
     open::that(&url).map_err(|e| format!("Tarayıcı açılamadı: {}", e))
 }
 

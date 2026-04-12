@@ -44,6 +44,7 @@ testdata/test_50mb.bin
 # Rust / Tauri (installer)
 installer/target/
 installer/src-tauri/target/
+installer/.env
 
 # IDE / araçlar
 .idea/
@@ -61,3 +62,7 @@ Thumbs.db
 *.log
 dist/
 build/
+
+# Windows dağıtım paketi — kurulum exe yerelde kopyalanır / zip ile paylaşılır
+WINDOWS/*.exe
+WINDOWS/*.msi

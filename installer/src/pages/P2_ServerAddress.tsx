@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { WizardState } from "../App";
+import { getDefaultApiUrl } from "../lib/dsnUrls";
 
 interface Props {
   state: WizardState;
@@ -51,8 +52,15 @@ export default function P2_ServerAddress({ state, update, onNext, onBack }: Prop
         <div className="page-icon">🖥️</div>
         <h1 className="page-title">Sunucu Adresi</h1>
         <p className="page-desc">
-          Sistem yöneticinizin size verdiği DSN sunucu adresini girin.
+          DSN backend adresini girin (genelde <strong>:8000</strong> portu). Kurulum paketi
+          önceden yapılandırıldıysa alan dolu gelir; değiştirmeden &quot;Bağlantıyı Test Et&quot;
+          diyebilirsiniz.
         </p>
+        {getDefaultApiUrl() && (
+          <p className="hint" style={{ marginTop: -8, marginBottom: 8 }}>
+            Bu sürümde varsayılan API adresi üretimde gömülüdür.
+          </p>
+        )}
 
         <div className="field">
           <label>Sunucu Adresi</label>

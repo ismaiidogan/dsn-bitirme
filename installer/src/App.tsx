@@ -6,6 +6,7 @@ import P3_Auth from "./pages/P3_Auth";
 import P4_Storage from "./pages/P4_Storage";
 import P5_Installing from "./pages/P5_Installing";
 import P6_Complete from "./pages/P6_Complete";
+import { getDefaultApiUrl } from "./lib/dsnUrls";
 
 export interface WizardState {
   serverUrl: string;
@@ -36,7 +37,7 @@ function loadPersistedServerUrl(): string {
 export default function App() {
   const [page, setPage] = useState(1);
   const [state, setState] = useState<WizardState>(() => ({
-    serverUrl: loadPersistedServerUrl(),
+    serverUrl: loadPersistedServerUrl() || getDefaultApiUrl(),
     authToken: "",
     storagePath: "",
     quotaGb: 50,

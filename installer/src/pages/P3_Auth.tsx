@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { WizardState } from "../App";
+import { resolveWebBaseUrlForLogin } from "../lib/dsnUrls";
 
 interface Props {
   state: WizardState;
@@ -42,7 +43,8 @@ export default function P3_Auth({ state, update, onNext, onBack }: Props) {
     setPhase("waiting");
     setErrMsg("");
     try {
-      await invoke("open_agent_login", { serverUrl: state.serverUrl });
+      const webBase = resolveWebBaseUrlForLogin(state.serverUrl);
+      await invoke("open_agent_login", { webBaseUrl: webBase });
     } catch (e: any) {
       setPhase("error");
       setErrMsg(e?.toString() ?? "Tarayıcı açılamadı");
