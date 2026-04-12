@@ -36,6 +36,10 @@ agent/dsn-storage-2/
 # Backend test çıktıları
 backend/downloaded_test*.bin
 backend/downloaded_*.bin
+# Büyük yerel test dosyalari (gerekirse testlerde uretilir)
+backend/test_1mb.bin
+backend/test_50mb.bin
+testdata/test_50mb.bin
 
 # Rust / Tauri (installer)
 installer/target/
