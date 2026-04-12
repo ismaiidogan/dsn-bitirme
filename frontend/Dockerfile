@@ -7,6 +7,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Next.js projede public/ olmayabilir; runner aşaması COPY için boş klasör gerekir
+RUN mkdir -p public
 ENV NEXT_TELEMETRY_DISABLED 1
 # Backend URL for server-side API proxy (rewrites). Required at build time for standalone.
 ARG NEXT_PUBLIC_API_URL=http://backend:8000
