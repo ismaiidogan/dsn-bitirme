@@ -283,21 +283,23 @@ pub async fn do_install(
 ///   2. Directory of this executable — correct when running raw build binary
 ///      (copy dsn-agent.exe next to dsn-installer.exe for dev/testing)
 fn find_agent_binary(app: &AppHandle, binary_name: &str) -> Result<PathBuf, String> {
-    // 1. resource_dir (NSIS-installed)
+    // Olası konumlar: Tauri v2 kaynak kökü, eski paketlemede korunan göreli yol, dev yaninda exe
+    let mut candidates: Vec<PathBuf> = Vec::new();
+
     if let Ok(res_dir) = app.path().resource_dir() {
-        let candidate = res_dir.join(binary_name);
-        if candidate.exists() {
-            return Ok(candidate);
+        candidates.push(res_dir.join(binary_name));
+        candidates.push(res_dir.join("agent/dist").join(binary_name));
+    }
+
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            candidates.push(exe_dir.join(binary_name));
         }
     }
 
-    // 2. Same directory as the installer executable (dev/testing)
-    if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(exe_dir) = exe_path.parent() {
-            let candidate = exe_dir.join(binary_name);
-            if candidate.exists() {
-                return Ok(candidate);
-            }
+    for c in candidates {
+        if c.exists() {
+            return Ok(c);
         }
     }
 

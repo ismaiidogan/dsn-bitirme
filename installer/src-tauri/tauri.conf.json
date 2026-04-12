@@ -35,7 +35,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["../../agent/dist/dsn-agent.exe"],
+    "resources": {
+      "../../agent/dist/dsn-agent.exe": "dsn-agent.exe"
+    },
     "windows": {
       "nsis": {
         "languages": ["Turkish"],
