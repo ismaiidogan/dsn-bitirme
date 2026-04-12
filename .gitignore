@@ -1,0 +1,59 @@
+# Ortam ve gizlilik
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Node
+node_modules/
+.next/
+out/
+.npm
+*.tsbuildinfo
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.test
+*.out
+agent/dist/
+agent/linux/dsn-agent-linux-amd64
+# Yerel agent ayarları ve depolama (asla repo’ya koyma)
+agent/config.yaml
+agent/config2.yaml
+agent/dsn-storage/
+agent/dsn-storage-2/
+# Backend test çıktıları
+backend/downloaded_test*.bin
+backend/downloaded_*.bin
+
+# Rust / Tauri (installer)
+installer/target/
+installer/src-tauri/target/
+
+# IDE / araçlar
+.idea/
+.vscode/
+.claude/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / log
+*.log
+dist/
+build/

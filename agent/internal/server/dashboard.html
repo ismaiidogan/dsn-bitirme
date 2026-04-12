@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <title>DSN Agent Dashboard</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #020617;
+        --card: #020617;
+        --card-border: #1e293b;
+        --text: #e5e7eb;
+        --muted: #6b7280;
+        --accent: #38bdf8;
+        --success: #22c55e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: var(--text);
+      }
+      .layout {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0 0 4px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 24px;
+      }
+      .card {
+        background: linear-gradient(145deg, #020617, #030712);
+        border-radius: 14px;
+        border: 1px solid var(--card-border);
+        padding: 16px 18px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+      }
+      .card-title {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .value-large {
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .value-small {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .progress {
+        position: relative;
+        height: 8px;
+        border-radius: 999px;
+        background: #020617;
+        overflow: hidden;
+        margin-top: 8px;
+        border: 1px solid #1e293b;
+      }
+      .progress-inner {
+        position: absolute;
+        inset: 0;
+        width: 0%;
+        background: linear-gradient(90deg, #38bdf8, #22c55e);
+        transition: width 0.4s ease;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 500;
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .chip {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid #1e293b;
+        color: var(--muted);
+      }
+      .footer {
+        margin-top: 28px;
+        text-align: right;
+        font-size: 11px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>DSN Agent</h1>
+        <div class="subtitle">Yerel depolama düğümünüzün durumu</div>
+      </header>
+
+      <nav style="margin-top: 24px; display: flex; gap: 8px; border-bottom: 1px solid var(--card-border); padding-bottom: 6px;">
+        <button id="tabStatus" class="tab-btn tab-active">Durum</button>
+        <button id="tabSettings" class="tab-btn">Ayarlar</button>
+      </nav>
+
+      <section id="panelStatus" class="grid">
+        <article class="card">
+          <div class="card-title">Disk Kullanımı</div>
+          <div class="value-large" id="usedLabel">—</div>
+          <div class="value-small" id="quotaLabel">—</div>
+          <div class="progress">
+            <div class="progress-inner" id="usageBar"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Chunk & Replika</div>
+          <div class="value-large" id="chunkCount">—</div>
+          <div class="value-small" id="replicaLabel">Toplam chunk sayısı</div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Bugünkü Trafik</div>
+          <div class="value-large" id="trafficUp">↑ —</div>
+          <div class="value-small" id="trafficDown">↓ —</div>
+          <div class="chips">
+            <span class="chip" id="trafficTotal">Toplam: —</span>
+          </div>
+        </article>
+      </section>
+
+      <section id="panelSettings" class="card" style="margin-top: 24px; display:none;">
+        <div class="card-title">Ayarlar</div>
+        <div style="display:flex; flex-direction:column; gap:12px; font-size:13px;">
+          <label>
+            Kota (GB)
+            <input id="quotaInput" type="number" min="1" step="1"
+              style="margin-top:4px;width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--card-border);background:#020617;color:var(--text);" />
+            <div class="value-small" id="settingsHint" style="margin-top:4px;"></div>
+          </label>
+          <label>
+            Bant genişliği limiti (MB/s)
+            <input id="bwInput" type="number" min="0" step="1"
+              style="margin-top:4px;width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--card-border);background:#020617;color:var(--text);" />
+            <div class="value-small" style="margin-top:4px;">0 = sınırsız</div>
+          </label>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+            <button id="saveSettings" style="padding:7px 14px;border-radius:999px;border:none;background:var(--accent);color:#0b1120;font-size:13px;font-weight:600;cursor:pointer;">
+              Güncelle
+            </button>
+            <span id="settingsStatus" class="value-small"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        DSN Agent Dashboard — <span id="updatedAt">güncelleniyor...</span>
+      </div>
+    </main>
+
+    <script>
+      function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return "0 B";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        const value = bytes / Math.pow(1024, i);
+        return value.toFixed(i === 0 ? 0 : 1) + " " + units[i];
+      }
+
+      async function loadStats() {
+        try {
+          const res = await fetch("/api/stats");
+          if (!res.ok) throw new Error("stats failed");
+          const s = await res.json();
+
+          const used = s.used_bytes || 0;
+          const quota = s.quota_bytes || 0;
+          document.getElementById("usedLabel").textContent = formatBytes(used);
+          document.getElementById("quotaLabel").textContent =
+            quota > 0 ? "Toplam kota: " + formatBytes(quota) : "Toplam kota: sınırsız";
+
+          const pct = quota > 0 ? Math.min(100, (used / quota) * 100) : 0;
+          document.getElementById("usageBar").style.width = pct.toFixed(1) + "%";
+
+          document.getElementById("chunkCount").textContent = s.chunk_count ?? "0";
+
+          const up = s.upload_today || 0;
+          const down = s.download_today || 0;
+          document.getElementById("trafficUp").textContent = "↑ " + formatBytes(up);
+          document.getElementById("trafficDown").textContent = "↓ " + formatBytes(down);
+          document.getElementById("trafficTotal").textContent =
+            "Toplam: " + formatBytes(up + down);
+
+          document.getElementById("updatedAt").textContent =
+            new Date().toLocaleTimeString("tr-TR");
+        } catch (e) {
+          document.getElementById("updatedAt").textContent = "istatistik okunamadı";
+        }
+      }
+
+      function switchTab(tab) {
+        const statusBtn = document.getElementById("tabStatus");
+        const settingsBtn = document.getElementById("tabSettings");
+        const panelStatus = document.getElementById("panelStatus");
+        const panelSettings = document.getElementById("panelSettings");
+        if (tab === "status") {
+          statusBtn.classList.add("tab-active");
+          settingsBtn.classList.remove("tab-active");
+          panelStatus.style.display = "";
+          panelSettings.style.display = "none";
+        } else {
+          statusBtn.classList.remove("tab-active");
+          settingsBtn.classList.add("tab-active");
+          panelStatus.style.display = "none";
+          panelSettings.style.display = "block";
+        }
+      }
+
+      document.getElementById("tabStatus").addEventListener("click", () => switchTab("status"));
+      document.getElementById("tabSettings").addEventListener("click", () => switchTab("settings"));
+
+      const settingsLimits = { effectiveMaxGb: null, freeGb: null };
+
+      async function loadSettingsDefaults() {
+        try {
+          const res = await fetch("/api/stats");
+          if (!res.ok) return;
+          const s = await res.json();
+          const bytesPerGb = 1024 * 1024 * 1024;
+          const rawFreeGb = Math.floor((s.disk_free_bytes || 0) / bytesPerGb);
+          const maxGb80 = Math.floor((s.disk_free_bytes || 0) * 0.80 / bytesPerGb);
+          const usedGb = Math.ceil((s.used_bytes || 0) / bytesPerGb);
+          const quotaGbCurrent = s.quota_bytes ? (s.quota_bytes / bytesPerGb) : 50;
+          const effectiveMax = Math.max(maxGb80, usedGb, 1);
+
+          settingsLimits.effectiveMaxGb = effectiveMax;
+          settingsLimits.freeGb = rawFreeGb;
+
+          const quotaInput = document.getElementById("quotaInput");
+          const bwInput = document.getElementById("bwInput");
+          const hintEl = document.getElementById("settingsHint");
+
+          quotaInput.value = Math.min(effectiveMax, Math.max(1, Math.round(quotaGbCurrent)));
+          quotaInput.max = effectiveMax;
+          quotaInput.title = `En fazla ${effectiveMax} GB paylaşabilirsiniz`;
+
+          const bw = s.bandwidth_limit_mbps ?? 0;
+          bwInput.value = Math.max(0, Math.round(bw));
+
+          hintEl.textContent = `Şu an ${rawFreeGb} GB boş alan var. En fazla ${effectiveMax} GB paylaşabilirsiniz.`;
+
+          validateSettingsForm();
+        } catch {}
+      }
+
+      function validateSettingsForm() {
+        const quotaInput = document.getElementById("quotaInput");
+        const bwInput = document.getElementById("bwInput");
+        const saveBtn = document.getElementById("saveSettings");
+        const statusEl = document.getElementById("settingsStatus");
+
+        const quotaGb = Number(quotaInput.value);
+        const bw = Number(bwInput.value);
+
+        let ok = true;
+        let overMax = false;
+
+        if (!quotaGb || quotaGb <= 0) ok = false;
+        if (bw < 0) ok = false;
+
+        if (settingsLimits.effectiveMaxGb != null && quotaGb > settingsLimits.effectiveMaxGb) {
+          ok = false;
+          overMax = true;
+        }
+
+        if (overMax) {
+          quotaInput.classList.add("input-error");
+          statusEl.textContent = `En fazla ${settingsLimits.effectiveMaxGb} GB paylaşabilirsiniz.`;
+        } else {
+          quotaInput.classList.remove("input-error");
+          if (statusEl.textContent.startsWith("En fazla")) {
+            statusEl.textContent = "";
+          }
+        }
+
+        saveBtn.disabled = !ok;
+      }
+
+      document.getElementById("quotaInput").addEventListener("input", validateSettingsForm);
+      document.getElementById("bwInput").addEventListener("input", validateSettingsForm);
+
+      document.getElementById("saveSettings").addEventListener("click", async () => {
+        const quotaInput = document.getElementById("quotaInput");
+        const bwInput = document.getElementById("bwInput");
+        const statusEl = document.getElementById("settingsStatus");
+        const quotaGb = Number(quotaInput.value);
+        const bw = Number(bwInput.value);
+
+        validateSettingsForm();
+        if (document.getElementById("saveSettings").disabled) return;
+        statusEl.textContent = "Kaydediliyor...";
+        try {
+          const res = await fetch("/api/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quota_gb: quotaGb, bandwidth_limit_mbps: bw }),
+          });
+          if (!res.ok) {
+            statusEl.textContent = "Kaydedilemedi (" + res.status + ").";
+            return;
+          }
+          statusEl.textContent = "Kaydedildi.";
+          loadStats();
+        } catch (e) {
+          statusEl.textContent = "Ağ hatası.";
+        }
+      });
+
+      // Basit tab button stilleri
+      const style = document.createElement("style");
+      style.textContent = `
+        .tab-btn {
+          background: transparent;
+          border: none;
+          color: var(--muted);
+          font-size: 13px;
+          padding: 6px 12px;
+          cursor: pointer;
+          border-radius: 999px;
+        }
+        .tab-btn.tab-active {
+          background: rgba(148, 163, 184, 0.12);
+          color: var(--text);
+        }
+        .input-error {
+          border-color: #f97373 !important;
+          box-shadow: 0 0 0 1px rgba(248,113,113,0.5);
+        }
+      `;
+      document.head.appendChild(style);
+
+      loadStats();
+      loadSettingsDefaults();
+      setInterval(loadStats, 5000);
+    </script>
+  </body>
+  </html>
+
