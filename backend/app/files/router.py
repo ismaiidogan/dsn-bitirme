@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -99,3 +99,29 @@ async def delete_file(
     deleted = await service.delete_file(db, str(current_user.id), file_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+
+
+@router.post("/chunks/{chunk_id}/upload", status_code=status.HTTP_200_OK)
+async def upload_chunk_via_backend(
+    chunk_id: str,
+    request: Request,
+    x_chunk_hash: str = Header(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    body = await request.body()
+    if not body:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty chunk body")
+
+    try:
+        result = await service.relay_chunk_upload(
+            db=db,
+            user_id=str(current_user.id),
+            chunk_id=chunk_id,
+            encrypted_data=body,
+            sha256_hash=x_chunk_hash,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return result

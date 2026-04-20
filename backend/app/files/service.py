@@ -1,6 +1,8 @@
 import hashlib
 from datetime import datetime, timezone
+from uuid import UUID
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 from sqlalchemy.orm import selectinload
@@ -364,3 +366,78 @@ async def delete_file(db: AsyncSession, user_id: str, file_id: str) -> bool:
     f.status = "deleted"
     await db.commit()
     return True
+
+
+async def relay_chunk_upload(
+    db: AsyncSession,
+    user_id: str,
+    chunk_id: str,
+    encrypted_data: bytes,
+    sha256_hash: str,
+) -> dict:
+    from app.auth.utils import create_node_token
+
+    try:
+        chunk_uuid = UUID(chunk_id)
+    except ValueError as exc:
+        raise ValueError("Invalid chunk id") from exc
+
+    chunk_result = await db.execute(
+        select(Chunk)
+        .join(File, Chunk.file_id == File.id)
+        .where(
+            Chunk.id == chunk_uuid,
+            File.user_id == user_id,
+            File.status == "uploading",
+        )
+    )
+    chunk = chunk_result.scalar_one_or_none()
+    if not chunk:
+        raise ValueError("Chunk not found for current user")
+
+    calculated_hash = hashlib.sha256(encrypted_data).hexdigest()
+    if calculated_hash != sha256_hash:
+        raise ValueError("Chunk hash mismatch")
+
+    replicas_result = await db.execute(
+        select(ChunkReplica).where(
+            ChunkReplica.chunk_id == chunk_uuid,
+            ChunkReplica.status.in_(("pending", "failed")),
+        )
+    )
+    replicas = replicas_result.scalars().all()
+    if not replicas:
+        raise ValueError("No pending replicas available for this chunk")
+
+    node_ids = [r.node_id for r in replicas]
+    nodes_result = await db.execute(select(Node).where(Node.id.in_(node_ids)))
+    nodes = {n.id: n for n in nodes_result.scalars().all()}
+
+    errors: list[str] = []
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        for replica in replicas:
+            node = nodes.get(replica.node_id)
+            if not node:
+                continue
+
+            node_token = create_node_token(str(node.id))
+            try:
+                response = await client.put(
+                    f"{node.url}/chunks/{chunk_id}",
+                    headers={
+                        "Authorization": f"Bearer {node_token}",
+                        "Content-Type": "application/octet-stream",
+                        "X-Chunk-Hash": sha256_hash,
+                        "X-Chunk-Size": str(len(encrypted_data)),
+                    },
+                    content=encrypted_data,
+                )
+                if response.is_success:
+                    return {"status": "ok", "node_id": str(node.id)}
+                errors.append(f"{node.url} -> {response.status_code}")
+            except Exception as exc:
+                errors.append(f"{node.url} -> {exc}")
+
+    raise ValueError(
+        "Chunk relay failed on all replicas: " + "; ".join(errors[:3])
+    )

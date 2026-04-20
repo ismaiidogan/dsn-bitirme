@@ -315,6 +315,17 @@ export const files = {
       body: JSON.stringify({ file_id }),
     }),
 
+  uploadChunk: (chunk_id: string, encryptedData: ArrayBuffer, sha256Hash: string) =>
+    apiFetch<{ status: string; node_id?: string }>(`/files/chunks/${chunk_id}/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Chunk-Hash": sha256Hash,
+        "X-Chunk-Size": encryptedData.byteLength.toString(),
+      },
+      body: encryptedData,
+    }),
+
   downloadManifest: (id: string) =>
     apiFetch<{
       file_id: string;

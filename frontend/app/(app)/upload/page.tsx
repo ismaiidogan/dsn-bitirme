@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, FileIcon, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { files as filesApi, uploadChunkToNode } from "@/lib/api";
+import { files as filesApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,12 +126,8 @@ export default function UploadPage() {
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
 
-        // Send encrypted chunk to the first node with its auth token
-        const nodeUrl = item.node_urls[0];
-        const nodeToken = item.node_tokens[0];
-        if (nodeUrl) {
-          await uploadChunkToNode(nodeUrl, item.chunk_id, encryptedData, sha256, nodeToken);
-        }
+        // Relay encrypted chunk via backend API (prevents HTTPS->HTTP mixed-content issues)
+        await filesApi.uploadChunk(item.chunk_id, encryptedData, sha256);
 
         setChunkProgress((prev) =>
           prev.map((c) => (c.index === item.chunk_index ? { ...c, status: "done" } : c))
