@@ -16,6 +16,7 @@ from app.auth.router import router as auth_router
 from app.nodes.router import router as nodes_router
 from app.files.router import router as files_router
 from app.chunks.router import router as chunks_router
+from app.billing.router import router as billing_router
 
 
 @asynccontextmanager
@@ -54,6 +55,7 @@ app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(nodes_router, prefix=API_PREFIX)
 app.include_router(files_router, prefix=API_PREFIX)
 app.include_router(chunks_router, prefix=API_PREFIX)
+app.include_router(billing_router, prefix=API_PREFIX)
 
 
 @app.get("/health")

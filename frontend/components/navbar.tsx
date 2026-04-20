@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Database, LayoutDashboard, Upload, Monitor, Settings, LogOut } from "lucide-react";
+import {
+  Database,
+  LayoutDashboard,
+  Upload,
+  Monitor,
+  Settings,
+  LogOut,
+  CreditCard,
+  Wallet,
+} from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { getRolePreference, RolePreference } from "@/lib/role";
@@ -13,6 +22,8 @@ const navItems = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/upload", labelKey: "nav.upload", icon: Upload },
   { href: "/agent", labelKey: "nav.agent", icon: Monitor },
+  { href: "/billing", labelKey: "nav.billing", icon: CreditCard },
+  { href: "/earnings", labelKey: "nav.earnings", icon: Wallet },
   { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
@@ -44,12 +55,16 @@ export function Navbar() {
 
       {/* Nav links */}
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => {
+        {navItems
+          .filter((item) => {
+            if (!role) return item.href !== "/earnings";
+            if (role === "consumer") return item.href !== "/agent" && item.href !== "/earnings";
+            if (role === "provider") return item.href !== "/dashboard" && item.href !== "/upload" && item.href !== "/billing";
+            return true;
+          })
+          .map((item) => {
           const Icon = item.icon;
           const active = pathname.startsWith(item.href);
-          const dimmed =
-            (role === "consumer" && item.href === "/agent") ||
-            (role === "provider" && (item.href === "/dashboard" || item.href === "/upload"));
 
           return (
             <Link
@@ -59,8 +74,6 @@ export function Navbar() {
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                 active
                   ? "bg-accent text-foreground"
-                  : dimmed
-                  ? "text-muted-foreground/60 hover:bg-accent/60 hover:text-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >

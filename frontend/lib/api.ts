@@ -84,6 +84,64 @@ export interface NodeItem {
   registered_at: string;
 }
 
+export interface BillingPlan {
+  code: string;
+  name: string;
+  currency: string;
+  price_per_gb_hour_cents: number;
+  base_price_cents: number;
+}
+
+export interface BillingMe {
+  subscription: {
+    plan_code: string;
+    status: string;
+    period_start: string;
+    period_end: string;
+    auto_renew: boolean;
+  };
+  estimate: {
+    usage_gb_hour: number;
+    estimated_amount_cents: number;
+    currency: string;
+  };
+  latest_invoice_status: string | null;
+}
+
+export interface BillingInvoice {
+  id: string;
+  invoice_no: string;
+  period_start: string;
+  period_end: string;
+  usage_gb_hour: number;
+  amount_cents: number;
+  status: string;
+  issued_at: string;
+  paid_at: string | null;
+}
+
+export interface BillingCheckoutResult {
+  subscription_status: string;
+  invoice_id: string;
+  payment_status: string;
+}
+
+export interface ProviderEarnings {
+  summary: {
+    current_period_bytes_stored: number;
+    current_period_estimated_cents: number;
+    total_estimated_cents: number;
+    currency: string;
+  };
+  items: {
+    id: string;
+    period_start: string;
+    period_end: string | null;
+    bytes_stored: number;
+    estimated_cents: number;
+  }[];
+}
+
 type CachedEntry = {
   expiresAt: number;
   value: unknown;
@@ -283,6 +341,31 @@ export const nodes = {
 
   delete: (id: string) =>
     apiFetch<void>(`/nodes/${id}`, { method: "DELETE" }),
+};
+
+// ─── Billing (MVP mock) ─────────────────────────────────────────────────────
+
+export const billing = {
+  plans: () =>
+    apiFetch<BillingPlan[]>("/billing/plans", { cacheKey: "billing:plans", cacheTtlMs: 15000 }),
+
+  me: () =>
+    apiFetch<BillingMe>("/billing/me", { cacheKey: "billing:me", cacheTtlMs: 5000 }),
+
+  invoices: () =>
+    apiFetch<BillingInvoice[]>("/billing/invoices", { cacheKey: "billing:invoices", cacheTtlMs: 5000 }),
+
+  mockCheckout: (plan_code: string) =>
+    apiFetch<BillingCheckoutResult>("/billing/mock/checkout", {
+      method: "POST",
+      body: JSON.stringify({ plan_code }),
+    }),
+
+  earnings: () =>
+    apiFetch<ProviderEarnings>("/billing/earnings/me", {
+      cacheKey: "billing:earnings",
+      cacheTtlMs: 5000,
+    }),
 };
 
 // ─── Chunk upload helper ─────────────────────────────────────────────────────
