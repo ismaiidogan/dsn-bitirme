@@ -116,7 +116,7 @@ obtain_access_token() {
   ACCESS_TOKEN="$(
     python3 - <<PY
 import json, sys, urllib.request
-url = "${DSN_SERVER_URL.rstrip('/')}/api/v1/auth/login"
+url = "${DSN_SERVER_URL%/}/api/v1/auth/login"
 body = json.dumps({"email": "${DSN_EMAIL}", "password": "${DSN_PASSWORD}"}).encode("utf-8")
 req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
 try:
@@ -204,8 +204,8 @@ Agent durumu:
 Loglar:
   journalctl -u dsn-agent -f
 
-Web tarafında, sunucudaki dashboard üzerinden:
-  http://localhost:3000/agent
+Web tarafında, dashboard üzerinden:
+  https://storemyfile.com/agent
 node'unuzu 'active' olarak görmelisiniz.
 
 EOF

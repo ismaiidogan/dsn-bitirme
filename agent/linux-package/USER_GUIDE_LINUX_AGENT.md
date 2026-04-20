@@ -3,7 +3,7 @@
 Bu klasör, Linux makinede DSN agent'ı kolayca kurup sisteme node olarak eklemek için hazırlanmıştır.
 
 - `install-dsn-agent.sh` → Otomatik kurulum script'i
-- `dsn-agent-linux-amd64` → Linux için derlenmiş agent binary'si (bunu senin build edip buraya koyman gerekiyor)
+- `dsn-agent-linux` (veya `dsn-agent-linux-amd64` / `dsn-agent`) → Linux agent binary'si
 
 > Not: Bu klasörün içeriğini `.tar.gz` veya `.zip` yapıp Linux kullanıcısına gönderebilirsin.
 
@@ -18,19 +18,19 @@ Bu klasör, Linux makinede DSN agent'ı kolayca kurup sisteme node olarak ekleme
    cd agent
    $env:GOOS="linux"
    $env:GOARCH="amd64"
-   go build -o .\linux\dsn-agent-linux-amd64 .\cmd\agent
+   go build -o .\linux\dsn-agent-linux .\cmd\agent
    ```
 
-   - Bu komut başarılı olursa `agent/linux/dsn-agent-linux-amd64` dosyası oluşur.
+   - Bu komut başarılı olursa `agent/linux/dsn-agent-linux` dosyası oluşur.
 
-2. `agent/linux/install-dsn-agent.sh` dosyasındaki aşağıdaki satırı kontrol et:
+2. `agent/linux/install-dsn-agent.sh` dosyasındaki default URL yalnızca örnektir.
 
    ```bash
    DSN_SERVER_URL_DEFAULT="http://172.20.10.3:8000"
    ```
 
-   - Burada kendi backend adresini kullanmalısın:
-     - Örn. `http://192.168.1.34:8000` veya dış IP/domain.
+   - Linux kurulum sırasında sorulan "DSN sunucu adresi" alanına canlı API adresini girin:
+     - `https://api.storemyfile.com`
 
 3. Bu `agent/linux` klasörünü arşivleyip Linux kullanıcısına gönder:
 
@@ -66,7 +66,7 @@ Kullanıcı (agent kuracak kişi) şu adımları izlemeli:
    ```
 
 4. Script şunları soracak:
-   - **DSN sunucu adresi**: (senin verdiğin backend URL'i, genelde değişmeden Enter)
+   - **DSN sunucu adresi**: `https://api.storemyfile.com` (boş geçmeyin)
    - **DSN e-posta adresi**: Örn. `testkullanici@test.com`
    - **DSN şifresi**: `Test1234!` (veya gerçek şifre)
    - **Kota (GB)**: Bu makinede DSN için ayırmak istediği disk alanı
@@ -94,10 +94,10 @@ Kullanıcı (agent kuracak kişi) şu adımları izlemeli:
 
 Kurulum bittikten sonra sen, kendi Windows tarafında:
 
-1. Tarayıcıda `http://localhost:3000/agent` sayfasını aç.
+1. Tarayıcıda `https://storemyfile.com/agent` sayfasını aç.
 2. "Bağlı Node'larım" bölümünde yeni Linux makinenin:
    - IP:port bilgisi (örn. `192.168.1.50:7777`),
    - Durumu **active** (yeşil) olarak görünmeli.
 
-Ardından `http://localhost:3000/upload` üzerinden dosya yükleyerek bu node'un düzgün çalıştığını test edebilirsin.
+Ardından `https://storemyfile.com/upload` üzerinden dosya yükleyerek bu node'un düzgün çalıştığını test edebilirsin.
 
