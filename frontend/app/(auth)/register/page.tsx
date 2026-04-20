@@ -95,7 +95,7 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="En az 8 karakter, 1 büyük harf, 1 rakam"
+                  placeholder={t("auth.passwordRulesHint")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Database, Loader2, CheckCircle2, MonitorDown } from "lucide-react";
 import { toErrorMessage } from "@/lib/errors";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function AgentLoginPage() {
+  const { t } = useLanguage();
   const [tab, setTab] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +23,7 @@ export default function AgentLoginPage() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data?.detail ?? "İstek başarısız");
+      throw new Error(data?.detail ?? t("agentLogin.requestFailed"));
     }
     return res.json();
   };
@@ -46,7 +48,7 @@ export default function AgentLoginPage() {
         window.location.href = `dsn-agent://auth?token=${encodeURIComponent(token)}`;
       }, 400);
     } catch (err: unknown) {
-      setError(toErrorMessage(err, "Bir hata oluştu"));
+      setError(toErrorMessage(err, t("agentLogin.genericError")));
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export default function AgentLoginPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
             <MonitorDown className="h-3.5 w-3.5" />
-            Agent Kurulum Sihirbazı için giriş
+            {t("agentLogin.wizardLogin")}
           </div>
         </div>
 
@@ -72,11 +74,11 @@ export default function AgentLoginPage() {
           /* Success state */
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-6 text-center space-y-3">
             <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
-            <p className="font-semibold text-green-400">Giriş Başarılı</p>
+            <p className="font-semibold text-green-400">{t("agentLogin.loginSuccess")}</p>
             <p className="text-sm text-muted-foreground">
-              Kurulum sihirbazına yönlendiriliyorsunuz...
+              {t("agentLogin.redirecting")}
               <br />
-              Bu sekmeyi kapatabilirsiniz.
+              {t("agentLogin.closeTab")}
             </p>
           </div>
         ) : (
@@ -85,17 +87,17 @@ export default function AgentLoginPage() {
 
             {/* Tabs */}
             <div className="flex border-b">
-              {(["login", "register"] as const).map((t) => (
+              {(["login", "register"] as const).map((tabKey) => (
                 <button
-                  key={t}
-                  onClick={() => { setTab(t); setError(""); }}
+                  key={tabKey}
+                  onClick={() => { setTab(tabKey); setError(""); }}
                   className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                    tab === t
+                    tab === tabKey
                       ? "text-foreground border-b-2 border-primary -mb-px"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {t === "login" ? "Giriş Yap" : "Kayıt Ol"}
+                  {tabKey === "login" ? t("agentLogin.loginTab") : t("agentLogin.registerTab")}
                 </button>
               ))}
             </div>
@@ -108,10 +110,10 @@ export default function AgentLoginPage() {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">E-posta</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("auth.email")}</label>
                 <input
                   type="email"
-                  placeholder="ornek@mail.com"
+                  placeholder="example@mail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -121,7 +123,7 @@ export default function AgentLoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Şifre</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("auth.password")}</label>
                 <input
                   type="password"
                   value={password}
@@ -138,14 +140,14 @@ export default function AgentLoginPage() {
                 className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {tab === "login" ? "Giriş Yap" : "Hesap Oluştur"}
+                {tab === "login" ? t("agentLogin.loginTab") : t("agentLogin.createAccount")}
               </button>
             </form>
           </div>
         )}
 
         <p className="text-center text-xs text-muted-foreground">
-          Bu sayfa yalnızca DSN Kurulum Sihirbazı tarafından açılmıştır.
+          {t("agentLogin.pageNote")}
         </p>
       </div>
     </div>

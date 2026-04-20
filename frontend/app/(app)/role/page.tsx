@@ -6,9 +6,11 @@ import { Database, HardDrive, CloudUpload } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getRolePreference, setRolePreference, getRoleHomePath, RolePreference } from "@/lib/role";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function RoleSelectPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -43,8 +45,7 @@ export default function RoleSelectPage() {
             <span className="text-2xl font-bold tracking-tight">DSN</span>
           </div>
           <p className="text-muted-foreground text-sm max-w-xl">
-            Bu ağı nasıl kullanmak istediğini seç. İstediğin zaman Ayarlar sayfasından bu tercihi
-            değiştirebilirsin.
+            {t("roleSelect.subtitle")}
           </p>
         </div>
 
@@ -54,20 +55,20 @@ export default function RoleSelectPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CloudUpload className="h-5 w-5 text-primary" />
-                Sadece dosya yüklemek istiyorum
+                {t("roleSelect.consumerCardTitle")}
               </CardTitle>
               <CardDescription>
-                Kendi dosyalarını şifreli ve dağıtık şekilde sakla, istediğin zaman indir.
+                {t("roleSelect.consumerCardDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1 mb-4 list-disc list-inside">
-                <li>Dosyalarını yedekle ve her yerden eriş</li>
-                <li>Replikasyon durumunu ve güvenlik özetini gör</li>
-                <li>Agent kurmak zorunda değilsin</li>
+                <li>{t("roleSelect.consumerBullet1")}</li>
+                <li>{t("roleSelect.consumerBullet2")}</li>
+                <li>{t("roleSelect.consumerBullet3")}</li>
               </ul>
               <Button className="w-full" onClick={() => chooseRole("consumer")}>
-                Dosya sahibi olarak devam et
+                {t("roleSelect.consumerAction")}
               </Button>
             </CardContent>
           </Card>
@@ -77,20 +78,20 @@ export default function RoleSelectPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HardDrive className="h-5 w-5 text-emerald-400" />
-                Boş diskimi kiraya vermek istiyorum
+                {t("roleSelect.providerCardTitle")}
               </CardTitle>
               <CardDescription>
-                Bilgisayarındaki boş alanı ağa aç, başkalarının dosyalarını şifreli şekilde barındır.
+                {t("roleSelect.providerCardDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1 mb-4 list-disc list-inside">
-                <li>Node&apos;larının durumunu ve kota kullanımını takip et</li>
-                <li>Güvenli, şifreli chunk&lsquo;lar ile veri barındır</li>
-                <li>İstersen daha sonra kendi dosyalarını da yükleyebilirsin</li>
+                <li>{t("roleSelect.providerBullet1")}</li>
+                <li>{t("roleSelect.providerBullet2")}</li>
+                <li>{t("roleSelect.providerBullet3")}</li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => chooseRole("provider")}>
-                Depolama sağlayıcı olarak devam et
+                {t("roleSelect.providerAction")}
               </Button>
             </CardContent>
           </Card>

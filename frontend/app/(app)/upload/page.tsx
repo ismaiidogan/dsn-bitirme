@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes } from "@/lib/utils";
 import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
 import { toErrorMessage } from "@/lib/errors";
+import { useLanguage } from "@/contexts/language-context";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
 const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
@@ -23,6 +24,7 @@ interface ChunkProgress {
 
 export default function UploadPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [state, setState] = useState<UploadState>("idle");
   const [progress, setProgress] = useState(0);
@@ -39,7 +41,7 @@ export default function UploadPage() {
 
   const selectFile = (f: File) => {
     if (f.size > MAX_FILE_SIZE) {
-      setErrorMsg("Dosya 5 GB sınırını aşıyor");
+      setErrorMsg(t("upload.fileTooLarge"));
       return;
     }
     setFile(f);
@@ -141,7 +143,7 @@ export default function UploadPage() {
       await filesApi.uploadComplete(manifest.file_id);
       setState("done");
     } catch (err: unknown) {
-      setErrorMsg(toErrorMessage(err, "Yükleme başarısız"));
+      setErrorMsg(toErrorMessage(err, t("upload.uploadFailed")));
       setState("error");
       setChunkProgress((prev) =>
         prev.map((c) => (c.status === "uploading" ? { ...c, status: "error" } : c))
@@ -152,13 +154,13 @@ export default function UploadPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dosya Yükle</h1>
-        <p className="text-muted-foreground text-sm mt-1">Maksimum 5 GB</p>
+        <h1 className="text-2xl font-bold">{t("upload.title")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("upload.maxSize")}</p>
       </div>
 
       {cryptoReady === false && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-          <strong className="block text-amber-50 mb-1">Şifreleme için HTTPS gerekli</strong>
+          <strong className="block text-amber-50 mb-1">{t("upload.httpsRequiredTitle")}</strong>
           {WEB_CRYPTO_BLOCKED_MSG}
         </div>
       )}
@@ -166,9 +168,9 @@ export default function UploadPage() {
       {/* Replication factor selection */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { value: 1 as 1, title: "Temel", desc: "1 kopya — en az alan" },
-          { value: 2 as 2, title: "Dengeli", desc: "2 kopya — önerilen" },
-          { value: 3 as 3, title: "Güvenli", desc: "3 kopya — maksimum koruma" },
+          { value: 1 as 1, title: t("upload.planBasic"), desc: t("upload.planBasicDesc") },
+          { value: 2 as 2, title: t("upload.planBalanced"), desc: t("upload.planBalancedDesc") },
+          { value: 3 as 3, title: t("upload.planSafe"), desc: t("upload.planSafeDesc") },
         ].map((opt) => {
           const active = replication === opt.value;
           return (
@@ -184,7 +186,7 @@ export default function UploadPage() {
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold">{opt.title}</span>
-                {active && <span className="text-xs text-primary font-medium">Seçili</span>}
+                {active && <span className="text-xs text-primary font-medium">{t("upload.selected")}</span>}
               </div>
               <div className="text-xs text-muted-foreground">
                 {opt.desc.replace(/^(\d)/, `${opt.value}`)}
@@ -215,8 +217,8 @@ export default function UploadPage() {
           />
           <Upload className="h-10 w-10 text-muted-foreground" />
           <div className="text-center">
-            <p className="font-medium">Dosyayı buraya sürükleyin</p>
-            <p className="text-muted-foreground text-sm">veya tıklayarak seçin</p>
+            <p className="font-medium">{t("upload.dropTitle")}</p>
+            <p className="text-muted-foreground text-sm">{t("upload.dropSubtitle")}</p>
           </div>
         </div>
       )}
@@ -234,7 +236,10 @@ export default function UploadPage() {
                 </p>
                 {file && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatBytes(file.size)} → tahminen ~{formatBytes(estimatedCompressedSize)} (zstd ile). Gerçek oran dosya türüne göre değişebilir.
+                    {t("upload.estimated", {
+                      raw: formatBytes(file.size),
+                      compressed: formatBytes(estimatedCompressedSize),
+                    })}
                   </p>
                 )}
               </div>
@@ -248,7 +253,7 @@ export default function UploadPage() {
             {state === "uploading" && (
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Yükleniyor...</span>
+                  <span className="text-muted-foreground">{t("upload.uploading")}</span>
                   <span className="font-medium">{progress}%</span>
                 </div>
                 <Progress value={progress} />
@@ -288,14 +293,14 @@ export default function UploadPage() {
           <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
             <CheckCircle2 className="h-12 w-12 text-emerald-500" />
             <div>
-              <p className="font-semibold text-lg">Yükleme Tamamlandı</p>
+              <p className="font-semibold text-lg">{t("upload.uploadDone")}</p>
               <p className="text-muted-foreground text-sm">{file?.name}</p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => { setFile(null); setState("idle"); setProgress(0); }}>
-                Yeni Dosya Yükle
+                {t("upload.newUpload")}
               </Button>
-              <Button onClick={() => router.push("/dashboard")}>Dashboard'a Dön</Button>
+              <Button onClick={() => router.push("/dashboard")}>{t("upload.backDashboard")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -309,20 +314,20 @@ export default function UploadPage() {
           disabled={cryptoReady === false}
         >
           <Upload className="h-4 w-4" />
-          Yüklemeye Başla
+          {t("upload.uploadStart")}
         </Button>
       )}
 
       {state === "uploading" && (
         <Button disabled className="w-full">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Yükleniyor... {progress}%
+          {t("upload.uploading")} {progress}%
         </Button>
       )}
 
       {state === "error" && (
         <Button variant="outline" className="w-full" onClick={handleUpload}>
-          Tekrar Dene
+          {t("upload.uploadRetry")}
         </Button>
       )}
     </div>

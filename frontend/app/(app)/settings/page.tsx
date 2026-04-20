@@ -11,9 +11,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { getRolePreference, setRolePreference, RolePreference } from "@/lib/role";
 import { toErrorMessage } from "@/lib/errors";
 import { validatePasswordRules } from "@/lib/validators/password";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -36,7 +38,7 @@ export default function SettingsPage() {
     setSuccess(false);
 
     if (newPassword !== confirmPassword) {
-      setError("Yeni şifreler eşleşmiyor");
+      setError(t("settings.passwordMismatch"));
       return;
     }
     const passwordError = validatePasswordRules(newPassword);
@@ -55,7 +57,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      setError(toErrorMessage(err, "Şifre değiştirme başarısız"));
+      setError(toErrorMessage(err, t("settings.passwordUpdateFailed")));
     }
     setLoading(false);
   };
@@ -68,17 +70,16 @@ export default function SettingsPage() {
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Hesap Ayarları</h1>
+        <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         <p className="text-muted-foreground text-sm mt-1">{user?.email}</p>
       </div>
 
       {/* Role preference */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Kullanım Tercihim</CardTitle>
+          <CardTitle className="text-base">{t("settings.roleTitle")}</CardTitle>
           <CardDescription>
-            Bu ağı ağırlıklı olarak nasıl kullanmak istediğinizi seçin. Bu sadece varsayılan
-            görünümü etkiler; her zaman tüm özelliklere erişebilirsiniz.
+            {t("settings.roleDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -95,9 +96,9 @@ export default function SettingsPage() {
                   : "border-border hover:border-primary/60 hover:bg-muted/30"
               }`}
             >
-              <p className="font-medium mb-0.5">Dosya sahibi</p>
+              <p className="font-medium mb-0.5">{t("settings.consumerTitle")}</p>
               <p className="text-xs text-muted-foreground">
-                Ağı çoğunlukla kendi dosyalarımı yüklemek ve yönetmek için kullanıyorum.
+                {t("settings.consumerDesc")}
               </p>
             </button>
 
@@ -113,9 +114,9 @@ export default function SettingsPage() {
                   : "border-border hover:border-primary/60 hover:bg-muted/30"
               }`}
             >
-              <p className="font-medium mb-0.5">Depolama sağlayıcı</p>
+              <p className="font-medium mb-0.5">{t("settings.providerTitle")}</p>
               <p className="text-xs text-muted-foreground">
-                Ağı çoğunlukla bilgisayarımın boş alanını node olarak paylaşmak için kullanıyorum.
+                {t("settings.providerDesc")}
               </p>
             </button>
           </div>
@@ -128,24 +129,23 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Monitor className="h-4 w-4" />
-              Bu cihazdaki node ayarları
+              {t("settings.localNodeTitle")}
             </CardTitle>
             <CardDescription>
-              Bu cihazda çalışan agent&apos;ın kota ve bant genişliği gibi ayarlarını yerel
-              dashboard üzerinden değiştirebilirsiniz.
+              {t("settings.localNodeDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground mb-3">
-              Varsayılan olarak Windows ve Linux agent&apos;ları{" "}
+              {t("settings.localNodeHintBefore")}{" "}
               <code className="px-1 py-0.5 rounded bg-muted border border-border text-[11px]">
                 http://localhost:7777
               </code>{" "}
-              adresinde bir yerel panel sunar.
+              {t("settings.localNodeHintAfter")}
             </p>
             <Button asChild variant="outline" size="sm">
               <a href="http://localhost:7777" target="_blank" rel="noreferrer">
-                Node ayarlarını aç
+                {t("settings.openNodeSettings")}
               </a>
             </Button>
           </CardContent>
@@ -157,10 +157,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <KeyRound className="h-4 w-4" />
-            Şifre Değiştir
+            {t("settings.passwordTitle")}
           </CardTitle>
           <CardDescription>
-            Güvenli bir şifre seçin: en az 8 karakter, 1 büyük harf, 1 rakam
+            {t("settings.passwordDesc")}
           </CardDescription>
         </CardHeader>
 
@@ -168,7 +168,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             {success && (
               <div className="rounded-md bg-emerald-900/30 border border-emerald-600/40 px-3 py-2 text-sm text-emerald-400">
-                Şifre başarıyla değiştirildi
+                {t("settings.passwordUpdated")}
               </div>
             )}
             {error && (
@@ -177,7 +177,7 @@ export default function SettingsPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="current">Mevcut Şifre</Label>
+              <Label htmlFor="current">{t("settings.currentPassword")}</Label>
               <Input
                 id="current"
                 type="password"
@@ -188,7 +188,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new">Yeni Şifre</Label>
+              <Label htmlFor="new">{t("settings.newPassword")}</Label>
               <Input
                 id="new"
                 type="password"
@@ -199,7 +199,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm">Yeni Şifre Tekrar</Label>
+              <Label htmlFor="confirm">{t("settings.confirmNewPassword")}</Label>
               <Input
                 id="confirm"
                 type="password"
@@ -213,7 +213,7 @@ export default function SettingsPage() {
           <CardFooter>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Şifreyi Güncelle
+              {t("settings.updatePasswordButton")}
             </Button>
           </CardFooter>
         </form>
@@ -222,11 +222,11 @@ export default function SettingsPage() {
       {/* Danger zone */}
       <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-base text-destructive">Çıkış</CardTitle>
+          <CardTitle className="text-base text-destructive">{t("settings.dangerTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Button variant="destructive" onClick={handleLogout}>
-            Hesaptan Çıkış Yap
+            {t("settings.logoutAccount")}
           </Button>
         </CardContent>
       </Card>

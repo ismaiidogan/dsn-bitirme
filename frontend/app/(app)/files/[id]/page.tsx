@@ -12,10 +12,12 @@ import { formatBytes, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
 import { toErrorMessage } from "@/lib/errors";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function FileDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useLanguage();
   const fileId = params.id as string;
 
   const [file, setFile] = useState<FileDetail | null>(null);
@@ -28,9 +30,9 @@ export default function FileDetailPage() {
     setLoadError(null);
     filesApi.get(fileId)
       .then(setFile)
-      .catch(() => setLoadError("Dosya detayı yüklenemedi. Dosya silinmiş olabilir."))
+      .catch(() => setLoadError(t("fileDetail.loadFailed")))
       .finally(() => setLoading(false));
-  }, [fileId]);
+  }, [fileId, t]);
 
   const handleDownload = async () => {
     if (!file) return;
@@ -66,7 +68,7 @@ export default function FileDetailPage() {
           const res = await fetch(`${chunk.node_url}/chunks/${chunk.chunk_id}`, {
             headers: { Authorization: `Bearer ${chunk.node_token}` },
           });
-          if (!res.ok) throw new Error(`Chunk ${chunk.chunk_index} indirme hatası`);
+          if (!res.ok) throw new Error(t("fileDetail.downloadChunkError", { index: chunk.chunk_index }));
           const ciphertext = await res.arrayBuffer();
 
           // Parse IV from hex
@@ -93,7 +95,7 @@ export default function FileDetailPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      toast.error(toErrorMessage(err, "İndirme başarısız"));
+      toast.error(toErrorMessage(err, t("fileDetail.downloadFailed")));
     }
     setDownloading(false);
   };
@@ -112,9 +114,9 @@ export default function FileDetailPage() {
         <p className="text-sm text-red-400">{loadError}</p>
         <div className="flex items-center justify-center gap-3">
           <Button variant="outline" onClick={() => router.push("/dashboard")}>
-            Dashboard'a Dön
+            {t("fileDetail.backDashboard")}
           </Button>
-          <Button onClick={() => router.refresh()}>Sayfayı Yenile</Button>
+          <Button onClick={() => router.refresh()}>{t("fileDetail.refreshPage")}</Button>
         </div>
       </div>
     );
@@ -126,13 +128,13 @@ export default function FileDetailPage() {
   const totalReplicas = file.replication?.total ?? 0;
   const health = file.replication?.health ?? "critical";
 
-  let safetyLabel = "Erişilemiyor";
+  let safetyLabel = t("fileDetail.inaccessible");
   let safetyVariant: "success" | "warning" | "danger" = "danger";
   if (health === "full" && file.status === "active") {
-    safetyLabel = "Güvende";
+    safetyLabel = t("fileDetail.safe");
     safetyVariant = "success";
   } else if (health === "partial" && activeReplicas > 0) {
-    safetyLabel = "Riskli";
+    safetyLabel = t("fileDetail.risky");
     safetyVariant = "warning";
   }
 
@@ -160,7 +162,7 @@ export default function FileDetailPage() {
           ) : (
             <Download className="h-4 w-4" />
           )}
-          İndir
+          {t("fileDetail.download")}
         </Button>
       </div>
 
@@ -168,7 +170,7 @@ export default function FileDetailPage() {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <p className="text-muted-foreground text-xs">Güvenlik Durumu</p>
+            <p className="text-muted-foreground text-xs">{t("fileDetail.securityStatus")}</p>
             <Badge
               className="mt-1"
               variant={safetyVariant}
@@ -179,27 +181,27 @@ export default function FileDetailPage() {
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <p className="text-muted-foreground text-xs">Kopya Durumu</p>
+            <p className="text-muted-foreground text-xs">{t("fileDetail.replicaStatus")}</p>
             <p className="text-lg font-bold mt-1">
               {activeReplicas}/{totalReplicas}
-              <span className="text-sm font-normal text-muted-foreground ml-1">aktif kopya</span>
+              <span className="text-sm font-normal text-muted-foreground ml-1">{t("fileDetail.activeReplica")}</span>
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {file.replication_factor} kopya hedeflenmiş.
+              {t("fileDetail.replicaTarget", { count: file.replication_factor })}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <p className="text-muted-foreground text-xs">Boyutlar</p>
+            <p className="text-muted-foreground text-xs">{t("fileDetail.sizes")}</p>
             <p className="text-sm mt-1">
-              Orijinal: <span className="font-semibold">{formatBytes(originalTotal)}</span>
+              {t("fileDetail.original")}: <span className="font-semibold">{formatBytes(originalTotal)}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Sıkıştırılmış (diskte): {formatBytes(compressedTotal)}
+              {t("fileDetail.compressedDisk")}: {formatBytes(compressedTotal)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Son güncelleme: {formatDate(file.created_at)}
+              {t("fileDetail.lastUpdate")}: {formatDate(file.created_at)}
             </p>
           </CardContent>
         </Card>

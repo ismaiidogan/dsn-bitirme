@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -35,30 +37,27 @@ export default function ForgotPasswordPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Şifremi Unuttum</CardTitle>
-            <CardDescription>
-              Hesabınızın e-posta adresini girin.
-            </CardDescription>
+            <CardTitle>{t("forgotPassword.title")}</CardTitle>
+            <CardDescription>{t("forgotPassword.description")}</CardDescription>
           </CardHeader>
-
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {success ? (
                 <div className="rounded-md bg-emerald-900/30 border border-emerald-600/40 px-3 py-2 text-sm text-emerald-300 flex items-start gap-2">
                   <MailCheck className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
-                    Şifre sıfırlama talebiniz alındı.
+                    {t("forgotPassword.successTitle")}
                     <br />
-                    Otomatik e-posta akışı yakında aktif olacak; şu an için yöneticinizle iletişime geçin.
+                    {t("forgotPassword.successDesc")}
                   </div>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-posta</Label>
+                  <Label htmlFor="email">{t("auth.email")}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="ornek@mail.com"
+                    placeholder="example@mail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -72,12 +71,12 @@ export default function ForgotPasswordPage() {
               {!success && (
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Talep Oluştur
+                  {t("forgotPassword.submit")}
                 </Button>
               )}
               <p className="text-sm text-muted-foreground text-center">
                 <Link href="/login" className="text-primary hover:underline">
-                  Giriş sayfasına dön
+                  {t("forgotPassword.backLogin")}
                 </Link>
               </p>
             </CardFooter>
