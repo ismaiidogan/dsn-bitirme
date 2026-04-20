@@ -31,9 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <Navbar />
       <main className="flex-1 ml-60 p-8">
-        <div className="mb-6 flex justify-end gap-2">
-          <LanguageToggle />
-          <ThemeToggle />
+        <div className="mb-6 flex justify-end">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card/85 px-2 py-1.5 shadow-[0_8px_24px_-18px_hsl(var(--foreground)/0.45)] backdrop-blur">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
         {children}
       </main>

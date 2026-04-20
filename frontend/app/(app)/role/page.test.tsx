@@ -2,12 +2,32 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import RoleSelectPage from "./page";
+import { translations } from "@/lib/i18n/translations";
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
+}));
+
+vi.mock("@/contexts/language-context", () => ({
+  useLanguage: () => {
+    const tr = translations.tr as Record<string, unknown>;
+    const resolve = (key: string) =>
+      key.split(".").reduce<unknown>((acc, part) => {
+        if (typeof acc !== "object" || acc === null) return key;
+        return (acc as Record<string, unknown>)[part] ?? key;
+      }, tr);
+    return {
+      language: "tr",
+      setLanguage: vi.fn(),
+      t: (key: string) => {
+        const value = resolve(key);
+        return typeof value === "string" ? value : key;
+      },
+    };
+  },
 }));
 
 describe("RoleSelectPage", () => {

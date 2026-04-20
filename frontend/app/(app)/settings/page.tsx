@@ -142,6 +142,8 @@ export default function SettingsPage() {
                 http://localhost:7777
               </code>{" "}
               {t("settings.localNodeHintAfter")}
+              {" "}
+              {t("settings.localNodeLocalOnlyNote")}
             </p>
             <Button asChild variant="outline" size="sm">
               <a href="http://localhost:7777" target="_blank" rel="noreferrer">

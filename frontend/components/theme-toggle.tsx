@@ -35,13 +35,13 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-1">
+    <div className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background/90 p-1 shadow-[0_4px_14px_-12px_hsl(var(--foreground)/0.4)]">
       <Button
         type="button"
         size="sm"
         variant={theme === "light" ? "default" : "ghost"}
         onClick={() => setMode("light")}
-        className="h-8 px-2"
+        className="h-8 px-2.5"
       >
         <Sun className="h-4 w-4" />
         {t("theme.light")}
@@ -51,7 +51,7 @@ export function ThemeToggle() {
         size="sm"
         variant={theme === "dark" ? "default" : "ghost"}
         onClick={() => setMode("dark")}
-        className="h-8 px-2"
+        className="h-8 px-2.5"
       >
         <Moon className="h-4 w-4" />
         {t("theme.dark")}
