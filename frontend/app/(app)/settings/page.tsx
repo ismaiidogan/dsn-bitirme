@@ -169,12 +169,12 @@ export default function SettingsPage() {
         <form onSubmit={handlePasswordChange}>
           <CardContent className="space-y-4">
             {success && (
-              <div className="rounded-md bg-emerald-900/30 border border-emerald-600/40 px-3 py-2 text-sm text-emerald-400">
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-600/40 dark:bg-emerald-900/30 dark:text-emerald-300">
                 {t("settings.passwordUpdated")}
               </div>
             )}
             {error && (
-              <div className="rounded-md bg-destructive/20 border border-destructive/40 px-3 py-2 text-sm text-red-400">
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:border-destructive/40 dark:bg-destructive/20">
                 {error}
               </div>
             )}

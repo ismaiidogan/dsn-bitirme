@@ -72,9 +72,9 @@ export default function AgentLoginPage() {
 
         {done ? (
           /* Success state */
-          <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-6 text-center space-y-3">
+          <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center dark:border-emerald-600/30 dark:bg-emerald-950/20">
             <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
-            <p className="font-semibold text-green-400">{t("agentLogin.loginSuccess")}</p>
+            <p className="font-semibold text-emerald-700 dark:text-emerald-300">{t("agentLogin.loginSuccess")}</p>
             <p className="text-sm text-muted-foreground">
               {t("agentLogin.redirecting")}
               <br />
@@ -104,7 +104,7 @@ export default function AgentLoginPage() {
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               {error && (
-                <div className="rounded-md bg-destructive/20 border border-destructive/40 px-3 py-2 text-sm text-red-400">
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:border-destructive/40 dark:bg-destructive/20">
                   {error}
                 </div>
               )}

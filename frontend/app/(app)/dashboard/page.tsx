@@ -101,7 +101,7 @@ export default function DashboardPage() {
         </div>
       ) : loadError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-          <p className="text-sm text-red-400">{loadError}</p>
+          <p className="text-sm text-destructive">{loadError}</p>
           <Button variant="outline" onClick={load}>
             {t("common.retry")}
           </Button>

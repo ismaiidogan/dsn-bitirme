@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {success ? (
-                <div className="rounded-md bg-emerald-900/30 border border-emerald-600/40 px-3 py-2 text-sm text-emerald-300 flex items-start gap-2">
+                <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-600/40 dark:bg-emerald-900/30 dark:text-emerald-300">
                   <MailCheck className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
                     {t("forgotPassword.successTitle")}

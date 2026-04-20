@@ -159,8 +159,8 @@ export default function UploadPage() {
       </div>
 
       {cryptoReady === false && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-          <strong className="block text-amber-50 mb-1">{t("upload.httpsRequiredTitle")}</strong>
+        <div className="rounded-lg border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-100">
+          <strong className="mb-1 block text-amber-900 dark:text-amber-50">{t("upload.httpsRequiredTitle")}</strong>
           {WEB_CRYPTO_BLOCKED_MSG}
         </div>
       )}
@@ -278,7 +278,7 @@ export default function UploadPage() {
             )}
 
             {errorMsg && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-red-400">
+              <div className="mt-3 flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {errorMsg}
               </div>
@@ -289,7 +289,7 @@ export default function UploadPage() {
 
       {/* Success */}
       {state === "done" && (
-        <Card className="border-emerald-600/30 bg-emerald-950/20">
+        <Card className="border-emerald-200 bg-emerald-50/70 dark:border-emerald-600/30 dark:bg-emerald-950/20">
           <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
             <CheckCircle2 className="h-12 w-12 text-emerald-500" />
             <div>

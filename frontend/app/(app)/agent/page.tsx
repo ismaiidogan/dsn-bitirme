@@ -117,7 +117,7 @@ export default function AgentPage() {
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : loadError ? (
-            <div className="px-6 py-6 text-sm text-red-400">
+            <div className="px-6 py-6 text-sm text-destructive">
               {loadError}
             </div>
           ) : myNodes.length === 0 ? (

@@ -111,7 +111,7 @@ export default function FileDetailPage() {
   if (loadError) {
     return (
       <div className="max-w-xl mx-auto py-12 text-center space-y-4">
-        <p className="text-sm text-red-400">{loadError}</p>
+        <p className="text-sm text-destructive">{loadError}</p>
         <div className="flex items-center justify-center gap-3">
           <Button variant="outline" onClick={() => router.push("/dashboard")}>
             {t("fileDetail.backDashboard")}
