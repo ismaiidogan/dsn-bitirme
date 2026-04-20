@@ -65,11 +65,13 @@ export default function FileDetailPage() {
         while (queue.length > 0) {
           const chunk = queue.shift();
           if (!chunk) return;
-          const res = await fetch(`${chunk.node_url}/chunks/${chunk.chunk_id}`, {
-            headers: { Authorization: `Bearer ${chunk.node_token}` },
-          });
-          if (!res.ok) throw new Error(t("fileDetail.downloadChunkError", { index: chunk.chunk_index }));
-          const ciphertext = await res.arrayBuffer();
+          const relay = await filesApi.downloadChunk(chunk.chunk_id);
+          const expectedHash = chunk.sha256_hash.toLowerCase();
+          const returnedHash = relay.sha256.toLowerCase();
+          if (returnedHash && returnedHash !== expectedHash) {
+            throw new Error(t("fileDetail.downloadChunkError", { index: chunk.chunk_index }));
+          }
+          const ciphertext = relay.data;
 
           // Parse IV from hex
           const iv = Uint8Array.from(

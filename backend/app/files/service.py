@@ -2,7 +2,7 @@ import hashlib
 import base64
 import asyncio
 from datetime import datetime, timezone
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -500,3 +500,106 @@ async def _relay_chunk_via_http_legacy(
             return response.is_success
     except Exception:
         return False
+
+
+async def relay_chunk_download(
+    db: AsyncSession,
+    user_id: str,
+    chunk_id: str,
+) -> tuple[bytes, str]:
+    from app.auth.utils import create_node_token
+
+    try:
+        chunk_uuid = UUID(chunk_id)
+    except ValueError as exc:
+        raise ValueError("Invalid chunk id") from exc
+
+    chunk_result = await db.execute(
+        select(Chunk)
+        .join(File, Chunk.file_id == File.id)
+        .where(
+            Chunk.id == chunk_uuid,
+            File.user_id == user_id,
+            File.status == "active",
+        )
+        .options(selectinload(Chunk.replicas))
+    )
+    chunk = chunk_result.scalar_one_or_none()
+    if not chunk:
+        raise ValueError("Chunk not found")
+    if not chunk.sha256_hash or chunk.sha256_hash == "pending":
+        raise ValueError("Chunk not ready yet")
+
+    replica_node_ids = [r.node_id for r in chunk.replicas if r.status in ("stored", "verified")]
+    if not replica_node_ids:
+        raise ValueError("No available replica for this chunk")
+
+    nodes_result = await db.execute(
+        select(Node).where(Node.id.in_(replica_node_ids), Node.status == "active")
+    )
+    nodes = {n.id: n for n in nodes_result.scalars().all()}
+    if not nodes:
+        raise ValueError("No active node available for this chunk")
+
+    for replica in chunk.replicas:
+        if replica.status not in ("stored", "verified"):
+            continue
+        node = nodes.get(replica.node_id)
+        if not node:
+            continue
+        node_id = str(node.id)
+        if not manager.is_connected(node_id):
+            continue
+
+        request_id = str(uuid4())
+        sent = await manager.send(
+            node_id,
+            {
+                "type": "fetch_chunk",
+                "request_id": request_id,
+                "chunk_id": chunk_id,
+            },
+        )
+        if not sent:
+            continue
+
+        message = await manager.wait_for_response(request_id, timeout_sec=20.0)
+        if not message or message.get("type") != "chunk_data":
+            continue
+
+        data_b64 = message.get("data_base64")
+        if not isinstance(data_b64, str):
+            continue
+        try:
+            payload = base64.b64decode(data_b64)
+        except Exception:
+            continue
+        if hashlib.sha256(payload).hexdigest() != chunk.sha256_hash:
+            continue
+        return payload, chunk.sha256_hash
+
+    for replica in chunk.replicas:
+        if replica.status not in ("stored", "verified"):
+            continue
+        node = nodes.get(replica.node_id)
+        if not node:
+            continue
+
+        node_token = create_node_token(str(node.id))
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                response = await client.get(
+                    f"{node.url}/chunks/{chunk_id}",
+                    headers={"Authorization": f"Bearer {node_token}"},
+                )
+                if not response.is_success:
+                    continue
+                payload = response.content
+        except Exception:
+            continue
+
+        if hashlib.sha256(payload).hexdigest() != chunk.sha256_hash:
+            continue
+        return payload, chunk.sha256_hash
+
+    raise ValueError("Chunk download relay failed")

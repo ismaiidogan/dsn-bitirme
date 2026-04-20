@@ -66,7 +66,9 @@ async def delete_node(
     node = result.scalar_one_or_none()
     if not node:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Node not found")
-    await db.delete(node)
+    # Keep historical chunk_replicas integrity; mark node inactive instead of hard delete.
+    node.status = "inactive"
+    node.last_heartbeat_at = None
     await db.commit()
 
 
@@ -140,6 +142,10 @@ async def node_websocket(node_id: str, websocket: WebSocket, db: AsyncSession = 
                 node.used_bytes = data.get("used_quota_bytes", node.used_bytes)
                 node.status = "active"
                 await db.commit()
+            elif msg_type in ("chunk_data", "chunk_error"):
+                request_id = data.get("request_id")
+                if request_id:
+                    await manager.resolve_response(str(request_id), data)
 
     except WebSocketDisconnect:
         pass

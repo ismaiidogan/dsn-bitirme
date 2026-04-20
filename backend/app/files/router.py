@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -125,3 +125,25 @@ async def upload_chunk_via_backend(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return result
+
+
+@router.get("/chunks/{chunk_id}/download")
+async def download_chunk_via_backend(
+    chunk_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        payload, sha256_hash = await service.relay_chunk_download(
+            db=db,
+            user_id=str(current_user.id),
+            chunk_id=chunk_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return Response(
+        content=payload,
+        media_type="application/octet-stream",
+        headers={"X-Chunk-Hash": sha256_hash},
+    )

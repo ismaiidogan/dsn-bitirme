@@ -3,6 +3,9 @@ package heartbeat
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -27,13 +30,13 @@ type CommandHandler func(msg map[string]any)
 
 // Service manages the WebSocket lifecycle.
 type Service struct {
-	serverURL  string
-	nodeID     string
-	nodeToken  string
-	store      *storage.Manager
-	onCommand  CommandHandler
-	statusMu   sync.RWMutex
-	connected  bool
+	serverURL string
+	nodeID    string
+	nodeToken string
+	store     *storage.Manager
+	onCommand CommandHandler
+	statusMu  sync.RWMutex
+	connected bool
 }
 
 // New creates a new heartbeat service.
@@ -148,10 +151,46 @@ func (s *Service) handleIncoming(conn *websocket.Conn, errCh chan<- error) {
 			continue
 		}
 		log.Printf("[heartbeat] received command: %v", msg["type"])
+		if msg["type"] == "fetch_chunk" {
+			if err := s.handleFetchChunk(conn, msg); err != nil {
+				log.Printf("[heartbeat] fetch_chunk error: %v", err)
+			}
+			continue
+		}
 		if s.onCommand != nil {
 			go s.onCommand(msg)
 		}
 	}
+}
+
+func (s *Service) handleFetchChunk(conn *websocket.Conn, msg map[string]any) error {
+	requestID, _ := msg["request_id"].(string)
+	chunkID, _ := msg["chunk_id"].(string)
+	if requestID == "" || chunkID == "" {
+		return fmt.Errorf("missing request_id/chunk_id")
+	}
+
+	data, err := s.store.Get(chunkID)
+	if err != nil {
+		conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+		_ = conn.WriteJSON(map[string]any{
+			"type":       "chunk_error",
+			"request_id": requestID,
+			"chunk_id":   chunkID,
+			"error":      err.Error(),
+		})
+		return err
+	}
+
+	sum := sha256.Sum256(data)
+	conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+	return conn.WriteJSON(map[string]any{
+		"type":        "chunk_data",
+		"request_id":  requestID,
+		"chunk_id":    chunkID,
+		"sha256_hash": hex.EncodeToString(sum[:]),
+		"data_base64": base64.StdEncoding.EncodeToString(data),
+	})
 }
 
 func (s *Service) IsConnected() bool {

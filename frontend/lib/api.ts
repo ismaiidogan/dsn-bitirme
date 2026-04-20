@@ -326,6 +326,47 @@ export const files = {
       body: encryptedData,
     }),
 
+  downloadChunk: async (chunk_id: string) => {
+    const headers: Record<string, string> = {};
+    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+    let res = await fetch(`/api/v1/files/chunks/${chunk_id}/download`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+
+    if (res.status === 401) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        const retryHeaders: Record<string, string> = {};
+        if (accessToken) retryHeaders["Authorization"] = `Bearer ${accessToken}`;
+        res = await fetch(`/api/v1/files/chunks/${chunk_id}/download`, {
+          method: "GET",
+          headers: retryHeaders,
+          credentials: "include",
+        });
+      }
+    }
+
+    if (!res.ok) {
+      let detail = "Request failed";
+      try {
+        const body = await res.json();
+        detail = body?.detail ?? detail;
+      } catch {
+        // no-op
+      }
+      throw new ApiError(res.status, detail);
+    }
+
+    const sha256 = res.headers.get("X-Chunk-Hash") ?? "";
+    return {
+      data: await res.arrayBuffer(),
+      sha256,
+    };
+  },
+
   downloadManifest: (id: string) =>
     apiFetch<{
       file_id: string;
