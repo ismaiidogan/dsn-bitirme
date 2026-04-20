@@ -7,6 +7,7 @@ import { Database, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { getRolePreference, getRoleHomePath } from "@/lib/role";
 import { toErrorMessage } from "@/lib/errors";
+import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -33,7 +35,7 @@ export default function LoginPage() {
         router.push(getRoleHomePath(role));
       }
     } catch (err: unknown) {
-      setError(toErrorMessage(err, "Giriş başarısız"));
+      setError(toErrorMessage(err, t("auth.loginFailed")));
     } finally {
       setLoading(false);
     }
@@ -47,13 +49,13 @@ export default function LoginPage() {
             <Database className="h-8 w-8" />
             <span className="text-2xl font-bold tracking-tight">DSN</span>
           </div>
-          <p className="text-muted-foreground text-sm">Distributed Storage Network</p>
+          <p className="text-muted-foreground text-sm">{t("common.appSubtitle")}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Giriş Yap</CardTitle>
-            <CardDescription>E-posta ve şifrenizle devam edin</CardDescription>
+            <CardTitle>{t("auth.loginTitle")}</CardTitle>
+            <CardDescription>{t("auth.loginDescription")}</CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -64,7 +66,7 @@ export default function LoginPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">E-posta</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -76,7 +78,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Şifre</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -85,18 +87,23 @@ export default function LoginPage() {
                   required
                   autoComplete="current-password"
                 />
+                <div className="text-right">
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                    {t("auth.forgotPassword")}
+                  </Link>
+                </div>
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Giriş Yap
+                {t("auth.loginButton")}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                Hesabınız yok mu?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link href="/register" className="text-primary hover:underline">
-                  Kayıt Ol
+                  {t("auth.registerButton")}
                 </Link>
               </p>
             </CardFooter>

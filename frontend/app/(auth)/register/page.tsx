@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getRolePreference, getRoleHomePath } from "@/lib/role";
 import { toErrorMessage } from "@/lib/errors";
 import { validatePasswordRules } from "@/lib/validators/password";
+import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -27,7 +29,7 @@ export default function RegisterPage() {
     setError("");
 
     if (password !== confirm) {
-      setError("Şifreler eşleşmiyor");
+      setError(t("auth.passwordMismatch"));
       return;
     }
     const passwordError = validatePasswordRules(password);
@@ -46,7 +48,7 @@ export default function RegisterPage() {
         router.push(getRoleHomePath(role));
       }
     } catch (err: unknown) {
-      setError(toErrorMessage(err, "Kayıt başarısız"));
+      setError(toErrorMessage(err, t("auth.registerFailed")));
     } finally {
       setLoading(false);
     }
@@ -60,13 +62,13 @@ export default function RegisterPage() {
             <Database className="h-8 w-8" />
             <span className="text-2xl font-bold tracking-tight">DSN</span>
           </div>
-          <p className="text-muted-foreground text-sm">Distributed Storage Network</p>
+          <p className="text-muted-foreground text-sm">{t("common.appSubtitle")}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Kayıt Ol</CardTitle>
-            <CardDescription>Yeni hesap oluşturun</CardDescription>
+            <CardTitle>{t("auth.registerTitle")}</CardTitle>
+            <CardDescription>{t("auth.registerDescription")}</CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -77,7 +79,7 @@ export default function RegisterPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">E-posta</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -89,7 +91,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Şifre</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -101,7 +103,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm">Şifre Tekrar</Label>
+                <Label htmlFor="confirm">{t("auth.passwordConfirm")}</Label>
                 <Input
                   id="confirm"
                   type="password"
@@ -116,12 +118,12 @@ export default function RegisterPage() {
             <CardFooter className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Kayıt Ol
+                {t("auth.registerButton")}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                Zaten hesabınız var mı?{" "}
+                {t("auth.hasAccount")}{" "}
                 <Link href="/login" className="text-primary hover:underline">
-                  Giriş Yap
+                  {t("auth.loginButton")}
                 </Link>
               </p>
             </CardFooter>
