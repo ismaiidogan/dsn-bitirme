@@ -28,8 +28,9 @@ DSN_STORAGE_DIR="$DSN_HOME/storage"
 DSN_CONFIG="$DSN_HOME/config.yaml"
 DSN_SERVICE="/etc/systemd/system/dsn-agent.service"
 
-# Bu script ile aynı klasörde duran Linux agent binary'si
-AGENT_BINARY_NAME="dsn-agent-linux-amd64"
+# Bu script ile aynı klasörde aranan Linux agent binary adları
+AGENT_BINARY_CANDIDATES=("dsn-agent-linux-amd64" "dsn-agent-linux" "dsn-agent")
+AGENT_BINARY_PATH=""
 
 log()  { echo "[install-dsn-agent] $*"; }
 fail() { echo "[install-dsn-agent][ERROR] $*" >&2; exit 1; }
@@ -52,10 +53,15 @@ detect_script_dir() {
 }
 
 check_binary() {
-  if [[ ! -x "$SCRIPT_DIR/$AGENT_BINARY_NAME" ]]; then
-    fail "Agent binary bulunamadı: $SCRIPT_DIR/$AGENT_BINARY_NAME
-Bu klasöre 'dsn-agent-linux-amd64' isimli Linux binary'sini koymanız gerekiyor."
-  fi
+  for candidate in "${AGENT_BINARY_CANDIDATES[@]}"; do
+    if [[ -f "$SCRIPT_DIR/$candidate" ]]; then
+      AGENT_BINARY_PATH="$SCRIPT_DIR/$candidate"
+      return
+    fi
+  done
+  fail "Agent binary bulunamadı.
+Beklenen dosya adları: ${AGENT_BINARY_CANDIDATES[*]}
+Script klasörü: $SCRIPT_DIR"
 }
 
 prompt_inputs() {
@@ -99,8 +105,9 @@ setup_directories() {
 
 copy_binary() {
   log "Agent binary kopyalanıyor → $DSN_BIN_DIR/dsn-agent"
-  cp "$SCRIPT_DIR/$AGENT_BINARY_NAME" "$DSN_BIN_DIR/dsn-agent"
+  cp "$AGENT_BINARY_PATH" "$DSN_BIN_DIR/dsn-agent"
   chown "$DSN_USER:$DSN_USER" "$DSN_BIN_DIR/dsn-agent"
+  chmod +x "$DSN_BIN_DIR/dsn-agent"
   chmod 700 "$DSN_BIN_DIR/dsn-agent"
 }
 
@@ -109,7 +116,7 @@ obtain_access_token() {
   ACCESS_TOKEN="$(
     python3 - <<PY
 import json, sys, urllib.request
-url = "${DSN_SERVER_URL_DEFAULT.rstrip('/')}/api/v1/auth/login"
+url = "${DSN_SERVER_URL.rstrip('/')}/api/v1/auth/login"
 body = json.dumps({"email": "${DSN_EMAIL}", "password": "${DSN_PASSWORD}"}).encode("utf-8")
 req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
 try:
