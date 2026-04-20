@@ -113,7 +113,8 @@ export function invalidateApiCache(prefix?: string) {
     responseCache.clear();
     return;
   }
-  for (const key of responseCache.keys()) {
+  const keys = Array.from(responseCache.keys());
+  for (const key of keys) {
     if (key.startsWith(prefix)) {
       responseCache.delete(key);
     }
