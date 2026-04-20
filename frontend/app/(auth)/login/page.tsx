@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Database, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { getRolePreference, getRoleHomePath } from "@/lib/role";
+import { toErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,8 +32,8 @@ export default function LoginPage() {
       } else {
         router.push(getRoleHomePath(role));
       }
-    } catch (err: any) {
-      setError(err?.message ?? "Giriş başarısız");
+    } catch (err: unknown) {
+      setError(toErrorMessage(err, "Giriş başarısız"));
     } finally {
       setLoading(false);
     }

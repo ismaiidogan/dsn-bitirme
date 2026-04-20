@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Upload, Trash2, Eye, RefreshCw, Loader2 } from "lucide-react";
-import { files as filesApi, FileItem, ApiError } from "@/lib/api";
+import { files as filesApi, FileItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import { toErrorMessage } from "@/lib/errors";
 
 function ReplicationBadge({ replication }: { replication: FileItem["replication"] }) {
   if (!replication) return <Badge variant="outline">—</Badge>;
@@ -42,14 +43,19 @@ export default function DashboardPage() {
   const router = useRouter();
   const [fileList, setFileList] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       setFileList(await filesApi.list());
-    } catch {}
-    setLoading(false);
+    } catch {
+      setLoadError("Dosyalar yüklenemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -60,8 +66,8 @@ export default function DashboardPage() {
     try {
       await filesApi.delete(id);
       setFileList((prev) => prev.filter((f) => f.id !== id));
-    } catch (err: any) {
-      toast.error(err?.message ?? "Silme başarısız");
+    } catch (err: unknown) {
+      toast.error(toErrorMessage(err, "Silme başarısız"));
     }
     setDeleting(null);
   };
@@ -89,6 +95,13 @@ export default function DashboardPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+          <p className="text-sm text-red-400">{loadError}</p>
+          <Button variant="outline" onClick={load}>
+            Tekrar Dene
+          </Button>
         </div>
       ) : fileList.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">

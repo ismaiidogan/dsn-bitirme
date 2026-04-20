@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { auth as authApi } from "@/lib/api";
-import { getRolePreference, setRolePreference, RolePreference, getRoleHomePath } from "@/lib/role";
+import { getRolePreference, setRolePreference, RolePreference } from "@/lib/role";
+import { toErrorMessage } from "@/lib/errors";
+import { validatePasswordRules } from "@/lib/validators/password";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -38,16 +39,9 @@ export default function SettingsPage() {
       setError("Yeni şifreler eşleşmiyor");
       return;
     }
-    if (newPassword.length < 8) {
-      setError("Şifre en az 8 karakter olmalı");
-      return;
-    }
-    if (!/[A-Z]/.test(newPassword)) {
-      setError("Şifre en az 1 büyük harf içermeli");
-      return;
-    }
-    if (!/\d/.test(newPassword)) {
-      setError("Şifre en az 1 rakam içermeli");
+    const passwordError = validatePasswordRules(newPassword);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -60,8 +54,8 @@ export default function SettingsPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err: any) {
-      setError(err?.message ?? "Şifre değiştirme başarısız");
+    } catch (err: unknown) {
+      setError(toErrorMessage(err, "Şifre değiştirme başarısız"));
     }
     setLoading(false);
   };

@@ -26,6 +26,8 @@ Bu belge, DSN projesinde kullanılan ortam değişkenlerini listeler. **Docker C
 | `NEXT_PUBLIC_API_URL` | Frontend (build + runtime) | Hayır | `http://backend:8000` | Backend API adresi. Compose ile çalışırken tarayıcı backend'e bu URL üzerinden istek atar; production'da kendi domain'inizi yazın. |
 | `NEXT_PUBLIC_AGENT_WINDOWS_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki Windows indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-windows.zip` veya bir release URL'si. |
 | `NEXT_PUBLIC_AGENT_LINUX_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki Linux indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-linux.zip` veya bir release URL'si. |
+| `NEXT_PUBLIC_AGENT_MAC_INTEL_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki macOS Intel indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-mac-intel.zip`. |
+| `NEXT_PUBLIC_AGENT_MAC_ARM64_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki macOS Apple Silicon indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-mac-arm64.zip`. |
 
 ---
 

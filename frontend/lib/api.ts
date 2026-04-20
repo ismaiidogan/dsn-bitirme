@@ -3,6 +3,7 @@ let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+  invalidateApiCache("auth:");
 }
 
 export function getAccessToken() {
@@ -83,13 +84,62 @@ export interface NodeItem {
   registered_at: string;
 }
 
+type CachedEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const responseCache = new Map<string, CachedEntry>();
+
+function getCached<T>(key: string): T | null {
+  const entry = responseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    responseCache.delete(key);
+    return null;
+  }
+  return entry.value as T;
+}
+
+function setCached<T>(key: string, value: T, ttlMs: number) {
+  responseCache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlMs,
+  });
+}
+
+export function invalidateApiCache(prefix?: string) {
+  if (!prefix) {
+    responseCache.clear();
+    return;
+  }
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(prefix)) {
+      responseCache.delete(key);
+    }
+  }
+}
+
 // ─── Core fetch helper ──────────────────────────────────────────────────────
+
+interface ApiFetchOptions extends RequestInit {
+  cacheKey?: string;
+  cacheTtlMs?: number;
+  skipCache?: boolean;
+}
 
 async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
   retry = true
 ): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
+  const canReadCache = method === "GET" && !!options.cacheKey && !options.skipCache;
+  if (canReadCache) {
+    const cached = getCached<T>(options.cacheKey!);
+    if (cached !== null) return cached;
+  }
+
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -118,8 +168,21 @@ async function apiFetch<T>(
     throw new ApiError(res.status, body?.detail ?? "Request failed");
   }
 
-  if (res.status === 204) return undefined as T;
-  return res.json();
+  if (res.status === 204) {
+    if (method !== "GET") {
+      invalidateApiCache();
+    }
+    return undefined as T;
+  }
+  const payload = await res.json();
+
+  if (canReadCache && options.cacheTtlMs && options.cacheTtlMs > 0) {
+    setCached(options.cacheKey!, payload, options.cacheTtlMs);
+  }
+  if (method !== "GET") {
+    invalidateApiCache();
+  }
+  return payload;
 }
 
 async function tryRefresh(): Promise<boolean> {
@@ -162,15 +225,19 @@ export const auth = {
     apiFetch<TokenResponse>("/auth/refresh", { method: "POST" }),
 
   me: () =>
-    apiFetch<{ id: string; email: string }>("/auth/me"),
+    apiFetch<{ id: string; email: string }>("/auth/me", {
+      cacheKey: "auth:me",
+      cacheTtlMs: 5000,
+    }),
 };
 
 // ─── Files ──────────────────────────────────────────────────────────────────
 
 export const files = {
-  list: () => apiFetch<FileItem[]>("/files"),
+  list: () => apiFetch<FileItem[]>("/files", { cacheKey: "files:list", cacheTtlMs: 5000 }),
 
-  get: (id: string) => apiFetch<FileDetail>(`/files/${id}`),
+  get: (id: string) =>
+    apiFetch<FileDetail>(`/files/${id}`, { cacheKey: `files:get:${id}`, cacheTtlMs: 5000 }),
 
   uploadInit: (
     filename: string,
@@ -205,7 +272,7 @@ export const files = {
 // ─── Nodes ──────────────────────────────────────────────────────────────────
 
 export const nodes = {
-  list: () => apiFetch<NodeItem[]>("/nodes/my"),
+  list: () => apiFetch<NodeItem[]>("/nodes/my", { cacheKey: "nodes:list", cacheTtlMs: 5000 }),
 
   register: (data: { name?: string; address: string; port: number; quota_gb: number }) =>
     apiFetch<{ node: NodeItem; node_token: string }>("/nodes/register", {

@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes } from "@/lib/utils";
 import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
+import { toErrorMessage } from "@/lib/errors";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
 const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
@@ -139,8 +140,8 @@ export default function UploadPage() {
       // 3. Complete upload
       await filesApi.uploadComplete(manifest.file_id);
       setState("done");
-    } catch (err: any) {
-      setErrorMsg(err?.message ?? "Yükleme başarısız");
+    } catch (err: unknown) {
+      setErrorMsg(toErrorMessage(err, "Yükleme başarısız"));
       setState("error");
       setChunkProgress((prev) =>
         prev.map((c) => (c.status === "uploading" ? { ...c, status: "error" } : c))

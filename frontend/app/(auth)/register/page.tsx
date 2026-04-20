@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Database, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { getRolePreference, getRoleHomePath } from "@/lib/role";
+import { toErrorMessage } from "@/lib/errors";
+import { validatePasswordRules } from "@/lib/validators/password";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,16 +30,9 @@ export default function RegisterPage() {
       setError("Şifreler eşleşmiyor");
       return;
     }
-    if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı");
-      return;
-    }
-    if (!/[A-Z]/.test(password)) {
-      setError("Şifre en az 1 büyük harf içermeli");
-      return;
-    }
-    if (!/\d/.test(password)) {
-      setError("Şifre en az 1 rakam içermeli");
+    const passwordError = validatePasswordRules(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -50,8 +45,8 @@ export default function RegisterPage() {
       } else {
         router.push(getRoleHomePath(role));
       }
-    } catch (err: any) {
-      setError(err?.message ?? "Kayıt başarısız");
+    } catch (err: unknown) {
+      setError(toErrorMessage(err, "Kayıt başarısız"));
     } finally {
       setLoading(false);
     }

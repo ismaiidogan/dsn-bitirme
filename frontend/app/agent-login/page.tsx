@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Database, Loader2, CheckCircle2, MonitorDown } from "lucide-react";
+import { toErrorMessage } from "@/lib/errors";
 
 export default function AgentLoginPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
@@ -44,8 +45,8 @@ export default function AgentLoginPage() {
       setTimeout(() => {
         window.location.href = `dsn-agent://auth?token=${encodeURIComponent(token)}`;
       }, 400);
-    } catch (err: any) {
-      setError(err?.message ?? "Bir hata oluştu");
+    } catch (err: unknown) {
+      setError(toErrorMessage(err, "Bir hata oluştu"));
     } finally {
       setLoading(false);
     }

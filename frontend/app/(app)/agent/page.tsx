@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Monitor, Download, CheckCircle2, Circle, Terminal } from "lucide-react";
+import { Monitor, Download, Loader2, Terminal } from "lucide-react";
 import { nodes as nodesApi, NodeItem } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatBytes, formatDate } from "@/lib/utils";
+import { formatBytes } from "@/lib/utils";
 
 const PLATFORMS = [
   {
@@ -18,16 +18,16 @@ const PLATFORMS = [
   {
     name: "macOS (Intel)",
     icon: "🍎",
-    file: "dsn-agent-mac-intel",
+    file: "dsn-agent-mac-intel.zip",
     cmd: "./dsn-agent-mac-intel",
-    downloadUrl: "",
+    downloadUrl: process.env.NEXT_PUBLIC_AGENT_MAC_INTEL_URL ?? "",
   },
   {
     name: "macOS (Apple Silicon)",
     icon: "🍎",
-    file: "dsn-agent-mac-arm64",
+    file: "dsn-agent-mac-arm64.zip",
     cmd: "./dsn-agent-mac-arm64",
-    downloadUrl: "",
+    downloadUrl: process.env.NEXT_PUBLIC_AGENT_MAC_ARM64_URL ?? "",
   },
   {
     name: "Linux",
@@ -56,11 +56,14 @@ bandwidth_limit_mbps: 0  # 0 = sınırsız`;
 export default function AgentPage() {
   const [myNodes, setMyNodes] = useState<NodeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setLoadError(null);
     nodesApi.list()
       .then(setMyNodes)
-      .catch(() => {})
+      .catch(() => setLoadError("Node bilgileri yüklenemedi. Lütfen tekrar deneyin."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,15 +77,27 @@ export default function AgentPage() {
       </div>
 
       {/* Node status */}
-      {myNodes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              Bağlı Node'larım
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            Bağlı Node'larım
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="px-6 py-10 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : loadError ? (
+            <div className="px-6 py-6 text-sm text-red-400">
+              {loadError}
+            </div>
+          ) : myNodes.length === 0 ? (
+            <div className="px-6 py-6 text-sm text-muted-foreground">
+              Henüz bağlı node bulunmuyor.
+            </div>
+          ) : (
             <div className="divide-y divide-border">
               {myNodes.map((node) => (
                 <div key={node.id} className="px-6 py-4 flex items-center justify-between">
@@ -112,9 +127,9 @@ export default function AgentPage() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Download */}
       <Card>
@@ -152,7 +167,7 @@ export default function AgentPage() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            * Windows ve Linux indirmeleri için `NEXT_PUBLIC_AGENT_WINDOWS_URL` / `NEXT_PUBLIC_AGENT_LINUX_URL` tanımlayın.
+            * İndirmeler için `NEXT_PUBLIC_AGENT_WINDOWS_URL`, `NEXT_PUBLIC_AGENT_LINUX_URL`, `NEXT_PUBLIC_AGENT_MAC_INTEL_URL`, `NEXT_PUBLIC_AGENT_MAC_ARM64_URL` tanımlayın.
           </p>
         </CardContent>
       </Card>

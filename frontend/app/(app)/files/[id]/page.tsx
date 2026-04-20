@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
+import { toErrorMessage } from "@/lib/errors";
 
 export default function FileDetailPage() {
   const params = useParams();
@@ -19,14 +20,17 @@ export default function FileDetailPage() {
 
   const [file, setFile] = useState<FileDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setLoadError(null);
     filesApi.get(fileId)
       .then(setFile)
-      .catch(() => router.replace("/dashboard"))
+      .catch(() => setLoadError("Dosya detayı yüklenemedi. Dosya silinmiş olabilir."))
       .finally(() => setLoading(false));
-  }, [fileId, router]);
+  }, [fileId]);
 
   const handleDownload = async () => {
     if (!file) return;
@@ -50,11 +54,15 @@ export default function FileDetailPage() {
         ["decrypt"]
       );
 
-      // Fetch and decrypt chunks in parallel, store by index
+      // Fetch and decrypt chunks with bounded concurrency to avoid memory spikes.
       const chunks: ArrayBuffer[] = new Array(manifest.chunks.length);
+      const queue = [...manifest.chunks];
+      const concurrency = 3;
 
-      await Promise.all(
-        manifest.chunks.map(async (chunk) => {
+      const worker = async () => {
+        while (queue.length > 0) {
+          const chunk = queue.shift();
+          if (!chunk) return;
           const res = await fetch(`${chunk.node_url}/chunks/${chunk.chunk_id}`, {
             headers: { Authorization: `Bearer ${chunk.node_token}` },
           });
@@ -72,8 +80,10 @@ export default function FileDetailPage() {
             cryptoKey,
             ciphertext
           );
-        })
-      );
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
       const blob = new Blob(chunks, { type: file.mime_type || "application/octet-stream" });
       const url = URL.createObjectURL(blob);
@@ -82,8 +92,8 @@ export default function FileDetailPage() {
       a.download = file.original_name;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err: any) {
-      toast.error(err?.message ?? "İndirme başarısız");
+    } catch (err: unknown) {
+      toast.error(toErrorMessage(err, "İndirme başarısız"));
     }
     setDownloading(false);
   };
@@ -92,6 +102,20 @@ export default function FileDetailPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-xl mx-auto py-12 text-center space-y-4">
+        <p className="text-sm text-red-400">{loadError}</p>
+        <div className="flex items-center justify-center gap-3">
+          <Button variant="outline" onClick={() => router.push("/dashboard")}>
+            Dashboard'a Dön
+          </Button>
+          <Button onClick={() => router.refresh()}>Sayfayı Yenile</Button>
+        </div>
       </div>
     );
   }
