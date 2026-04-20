@@ -14,6 +14,20 @@ import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
 import { toErrorMessage } from "@/lib/errors";
 import { useLanguage } from "@/contexts/language-context";
 
+async function tryDecompressChunk(data: ArrayBuffer): Promise<ArrayBuffer> {
+  if (typeof DecompressionStream === "undefined") {
+    return data;
+  }
+  try {
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const decompressedBlob = await new Response(stream).blob();
+    return await decompressedBlob.arrayBuffer();
+  } catch {
+    // Older files may be stored without compression; keep raw decrypted bytes.
+    return data;
+  }
+}
+
 export default function FileDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -79,11 +93,12 @@ export default function FileDetailPage() {
           );
 
           // Decrypt with AES-256-GCM
-          chunks[chunk.chunk_index] = await crypto.subtle.decrypt(
+          const decrypted = await crypto.subtle.decrypt(
             { name: "AES-GCM", iv },
             cryptoKey,
             ciphertext
           );
+          chunks[chunk.chunk_index] = await tryDecompressChunk(decrypted);
         }
       };
 

@@ -22,6 +22,18 @@ interface ChunkProgress {
   status: "pending" | "uploading" | "done" | "error";
 }
 
+async function compressChunk(plaintext: ArrayBuffer): Promise<ArrayBuffer> {
+  if (typeof CompressionStream === "undefined") {
+    return plaintext;
+  }
+
+  const stream = new Blob([plaintext]).stream().pipeThrough(new CompressionStream("gzip"));
+  const compressedBlob = await new Response(stream).blob();
+  const compressed = await compressedBlob.arrayBuffer();
+  // If compression is ineffective, keep original payload.
+  return compressed.byteLength < plaintext.byteLength ? compressed : plaintext;
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const { t } = useLanguage();
@@ -113,11 +125,12 @@ export default function UploadPage() {
           ["encrypt"]
         );
 
-        // Encrypt chunk with AES-256-GCM
+        // Compress (if beneficial) and encrypt chunk with AES-256-GCM
+        const uploadPayload = await compressChunk(plaintext);
         const encryptedData = await crypto.subtle.encrypt(
           { name: "AES-GCM", iv },
           cryptoKey,
-          plaintext
+          uploadPayload
         );
 
         // Compute SHA-256 of the ciphertext (node stores & verifies this)
