@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -77,6 +80,11 @@ func main() {
 	// Command handler for WebSocket messages from backend
 	cmdHandler := func(msg map[string]any) {
 		switch msg["type"] {
+		case "store_chunk":
+			if err := storeChunkFromWS(store, cfg.ServerURL, cfg.NodeToken, msg); err != nil {
+				log.Printf("[cmd] store_chunk failed: %v", err)
+			}
+
 		case "delete_chunk":
 			id, _ := msg["chunk_id"].(string)
 			if err := store.Delete(id); err != nil {
@@ -180,8 +188,10 @@ func registerNode(cfg *config.Config, cfgPath string) error {
 	}
 
 	var result struct {
-		Node      struct{ ID string `json:"id"` } `json:"node"`
-		NodeToken string                           `json:"node_token"`
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+		NodeToken string `json:"node_token"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return err
@@ -220,6 +230,57 @@ func replicateChunk(store *storage.Manager, chunkID, targetURL, targetToken stri
 	}
 	defer resp.Body.Close()
 	log.Printf("[replicate] chunk %s → %s: HTTP %d", chunkID, targetURL, resp.StatusCode)
+}
+
+func storeChunkFromWS(store *storage.Manager, serverURL, nodeToken string, msg map[string]any) error {
+	chunkID, _ := msg["chunk_id"].(string)
+	shaFromBackend, _ := msg["sha256_hash"].(string)
+	dataB64, _ := msg["data_base64"].(string)
+	if chunkID == "" || shaFromBackend == "" || dataB64 == "" {
+		return fmt.Errorf("missing chunk_id/sha256_hash/data_base64")
+	}
+
+	data, err := base64.StdEncoding.DecodeString(dataB64)
+	if err != nil {
+		return fmt.Errorf("decode base64: %w", err)
+	}
+	sum := sha256.Sum256(data)
+	shaLocal := hex.EncodeToString(sum[:])
+	if shaLocal != shaFromBackend {
+		return fmt.Errorf("hash mismatch, expected=%s got=%s", shaFromBackend, shaLocal)
+	}
+
+	storedHash, err := store.Store(chunkID, data)
+	if err != nil {
+		return fmt.Errorf("store chunk: %w", err)
+	}
+
+	body, _ := json.Marshal(map[string]any{
+		"sha256_hash": storedHash,
+		"size_bytes":  len(data),
+	})
+	req, err := http.NewRequest(
+		http.MethodPost,
+		fmt.Sprintf("%s/api/v1/chunks/%s/confirm", serverURL, chunkID),
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return fmt.Errorf("build confirm request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+nodeToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send confirm: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("confirm HTTP %d", resp.StatusCode)
+	}
+
+	log.Printf("[cmd] stored chunk %s via websocket relay", chunkID)
+	return nil
 }
 
 func externalAddr() (string, error) {

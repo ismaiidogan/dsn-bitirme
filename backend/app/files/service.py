@@ -1,4 +1,6 @@
 import hashlib
+import base64
+import asyncio
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -19,6 +21,7 @@ from app.files.schemas import (
     DownloadManifest, DownloadManifestChunk,
 )
 from app.config import settings
+from app.nodes.connection_manager import manager
 
 
 def _replication_status(active: int, total: int) -> ReplicationStatus:
@@ -414,30 +417,86 @@ async def relay_chunk_upload(
     nodes = {n.id: n for n in nodes_result.scalars().all()}
 
     errors: list[str] = []
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        for replica in replicas:
-            node = nodes.get(replica.node_id)
-            if not node:
-                continue
+    payload_b64 = base64.b64encode(encrypted_data).decode("ascii")
+    for replica in replicas:
+        node = nodes.get(replica.node_id)
+        if not node:
+            continue
 
-            node_token = create_node_token(str(node.id))
-            try:
-                response = await client.put(
-                    f"{node.url}/chunks/{chunk_id}",
-                    headers={
-                        "Authorization": f"Bearer {node_token}",
-                        "Content-Type": "application/octet-stream",
-                        "X-Chunk-Hash": sha256_hash,
-                        "X-Chunk-Size": str(len(encrypted_data)),
-                    },
-                    content=encrypted_data,
-                )
-                if response.is_success:
-                    return {"status": "ok", "node_id": str(node.id)}
-                errors.append(f"{node.url} -> {response.status_code}")
-            except Exception as exc:
-                errors.append(f"{node.url} -> {exc}")
+        node_id = str(node.id)
+        if manager.is_connected(node_id):
+            sent = await manager.send(
+                node_id,
+                {
+                    "type": "store_chunk",
+                    "chunk_id": chunk_id,
+                    "sha256_hash": sha256_hash,
+                    "data_base64": payload_b64,
+                },
+            )
+            if sent and await _wait_for_chunk_replica_stored(db, chunk_uuid, replica.node_id):
+                return {"status": "ok", "node_id": node_id}
+            errors.append(f"{node_id} -> websocket relay failed")
+        else:
+            errors.append(f"{node_id} -> websocket not connected")
+
+        legacy_ok = await _relay_chunk_via_http_legacy(
+            node_url=node.url,
+            chunk_id=chunk_id,
+            encrypted_data=encrypted_data,
+            sha256_hash=sha256_hash,
+            node_token=create_node_token(node_id),
+        )
+        if legacy_ok:
+            return {"status": "ok", "node_id": node_id}
+        errors.append(f"{node_id} -> http relay failed")
 
     raise ValueError(
         "Chunk relay failed on all replicas: " + "; ".join(errors[:3])
     )
+
+
+async def _wait_for_chunk_replica_stored(
+    db: AsyncSession,
+    chunk_id: UUID,
+    node_id: UUID,
+    timeout_sec: float = 15.0,
+    poll_interval_sec: float = 0.25,
+) -> bool:
+    loops = max(1, int(timeout_sec / poll_interval_sec))
+    for _ in range(loops):
+        result = await db.execute(
+            select(ChunkReplica.status).where(
+                ChunkReplica.chunk_id == chunk_id,
+                ChunkReplica.node_id == node_id,
+            )
+        )
+        status_value = result.scalar_one_or_none()
+        if status_value in ("stored", "verified"):
+            return True
+        await asyncio.sleep(poll_interval_sec)
+    return False
+
+
+async def _relay_chunk_via_http_legacy(
+    node_url: str,
+    chunk_id: str,
+    encrypted_data: bytes,
+    sha256_hash: str,
+    node_token: str,
+) -> bool:
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.put(
+                f"{node_url}/chunks/{chunk_id}",
+                headers={
+                    "Authorization": f"Bearer {node_token}",
+                    "Content-Type": "application/octet-stream",
+                    "X-Chunk-Hash": sha256_hash,
+                    "X-Chunk-Size": str(len(encrypted_data)),
+                },
+                content=encrypted_data,
+            )
+            return response.is_success
+    except Exception:
+        return False
