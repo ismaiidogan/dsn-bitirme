@@ -25,6 +25,7 @@ Bu belge, DSN projesinde kullanılan ortam değişkenlerini listeler. **Docker C
 | `RE_REPLICATION_CHECK_MIN` | Backend | Hayır | `5` | Re-replication kontrol aralığı (dakika). |
 | `NEXT_PUBLIC_API_URL` | Frontend (build + runtime) | Hayır | `http://backend:8000` | Backend API adresi. Compose ile çalışırken tarayıcı backend'e bu URL üzerinden istek atar; production'da kendi domain'inizi yazın. |
 | `NEXT_PUBLIC_AGENT_WINDOWS_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki Windows indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-windows.zip` veya bir release URL'si. |
+| `NEXT_PUBLIC_AGENT_LINUX_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki Linux indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-linux.zip` veya bir release URL'si. |
 
 ---
 

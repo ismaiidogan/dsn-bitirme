@@ -1,0 +1,19 @@
+DSN Agent - Windows Hızlı Kurulum
+=================================
+
+Bu sürümde kullanıcıdan config.yaml düzenlemesi istenmez.
+Kurulum sihirbazı giriş ve ayar adımlarını ekrandan yaptırır.
+
+Adımlar
+-------
+1) Zip'i açın.
+2) "DSN Installer_1.0.0_x64-setup.exe" dosyasını çalıştırın.
+3) Sihirbazda "Bağlantıyı Test Et" adımını geçin.
+4) "Tarayıcıda Giriş Yap" ile hesabınıza giriş yapın.
+5) Giriş doğrulandıktan sonra klasör/kota seçip kurulumu tamamlayın.
+
+Not
+---
+- Windows Güvenlik Duvarı izni sorulursa "Özel ağlar" için izin verin.
+- Kurulumdan sonra node durumunu storemyfile.com/agent sayfasından kontrol edin.
+

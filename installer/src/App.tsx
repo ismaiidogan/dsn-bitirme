@@ -21,6 +21,11 @@ export interface WizardState {
 const STEPS = ["Karşılama", "Sunucu", "Giriş", "Depolama", "Kurulum", "Tamamlandı"];
 const WIZARD_STORAGE_KEY = "dsn-installer-wizard";
 
+function isLocalDevUrl(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return v.includes("localhost") || v.includes("127.0.0.1");
+}
+
 function loadPersistedServerUrl(): string {
   try {
     const raw = localStorage.getItem(WIZARD_STORAGE_KEY);
@@ -35,9 +40,17 @@ function loadPersistedServerUrl(): string {
 }
 
 export default function App() {
+  const defaultApiUrl = getDefaultApiUrl();
+  const persistedServerUrl = loadPersistedServerUrl();
+  const initialServerUrl =
+    persistedServerUrl &&
+    !(isLocalDevUrl(persistedServerUrl) && defaultApiUrl && !isLocalDevUrl(defaultApiUrl))
+      ? persistedServerUrl
+      : defaultApiUrl;
+
   const [page, setPage] = useState(1);
   const [state, setState] = useState<WizardState>(() => ({
-    serverUrl: loadPersistedServerUrl() || getDefaultApiUrl(),
+    serverUrl: initialServerUrl,
     authToken: "",
     storagePath: "",
     quotaGb: 50,

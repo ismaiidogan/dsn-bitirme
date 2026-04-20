@@ -63,6 +63,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000}
         NEXT_PUBLIC_AGENT_WINDOWS_URL: ${NEXT_PUBLIC_AGENT_WINDOWS_URL:-}
+        NEXT_PUBLIC_AGENT_LINUX_URL: ${NEXT_PUBLIC_AGENT_LINUX_URL:-}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -78,6 +79,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000}
       NEXT_PUBLIC_AGENT_WINDOWS_URL: ${NEXT_PUBLIC_AGENT_WINDOWS_URL:-}
+      NEXT_PUBLIC_AGENT_LINUX_URL: ${NEXT_PUBLIC_AGENT_LINUX_URL:-}
 
 volumes:
   postgres_data:

@@ -1,19 +1,19 @@
 ================================================================================
-  DSN — Depolama düğümü (node) kurulumu
+  DSN — Windows Kurulum (Basit Akış)
 ================================================================================
 
-Bu klasördeki kurulum programı, bilgisayarınızı DSN ağına depolama sunucusu olarak
-ekler. Sunucu adresi kuruluma gömülüdür; ekstra teknik ayar gerekmez.
+Bu paket, DSN Agent kurulumunu tek tıkla başlatır.
+Kullanıcıdan config.yaml düzenlemesi istenmez.
 
 ADIMLAR
 --------
 
-1) "DSN-Installer-Kurulum.exe" dosyasına çift tıklayın.
+1) "DSN Installer_1.0.0_x64-setup.exe" dosyasına çift tıklayın.
 
 2) Kurulum sihirbazında sırayla ilerleyin:
-   • Sunucu adresi alanı dolu gelir — "Bağlantıyı Test Et" ile doğrulayın.
+   • Sunucu adresi alanı dolu gelir — doğrudan "Bağlantıyı Test Et" deyin.
    • "Tarayıcıda Giriş Yap" ile site açılır — kayıt olun veya giriş yapın.
-   • Depolama klasörü ve kota ayarlarını seçin.
+   • Giriş doğrulandıktan sonra depolama klasörü ve kota ayarlarını seçin.
    • Kurulum bitince agent arka planda çalışır.
 
 3) Windows güvenlik duvarı sorarsa özel ağ için izin verin.

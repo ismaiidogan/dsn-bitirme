@@ -32,9 +32,9 @@ const PLATFORMS = [
   {
     name: "Linux",
     icon: "🐧",
-    file: "dsn-agent-linux",
+    file: "dsn-agent-linux.zip",
     cmd: "./dsn-agent-linux",
-    downloadUrl: "",
+    downloadUrl: process.env.NEXT_PUBLIC_AGENT_LINUX_URL ?? "",
   },
 ];
 
@@ -152,7 +152,7 @@ export default function AgentPage() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            * Windows indirmesi için `NEXT_PUBLIC_AGENT_WINDOWS_URL` tanımlayın. Diğer platformlar yakında.
+            * Windows ve Linux indirmeleri için `NEXT_PUBLIC_AGENT_WINDOWS_URL` / `NEXT_PUBLIC_AGENT_LINUX_URL` tanımlayın.
           </p>
         </CardContent>
       </Card>

@@ -1,0 +1,55 @@
+================================================================================
+  DSN — Windows Kurulum (Basit Akış)
+================================================================================
+
+Bu paket, DSN Agent kurulumunu tek tıkla başlatır.
+Kullanıcıdan config.yaml düzenlemesi istenmez.
+
+ADIMLAR
+--------
+
+1) "DSN Installer_1.0.0_x64-setup.exe" dosyasına çift tıklayın.
+
+2) Kurulum sihirbazında sırayla ilerleyin:
+   • Sunucu adresi alanı dolu gelir — doğrudan "Bağlantıyı Test Et" deyin.
+   • "Tarayıcıda Giriş Yap" ile site açılır — kayıt olun veya giriş yapın.
+   • Giriş doğrulandıktan sonra depolama klasörü ve kota ayarlarını seçin.
+   • Kurulum bitince agent arka planda çalışır.
+
+3) Windows güvenlik duvarı sorarsa özel ağ için izin verin.
+
+4) BİLGİSAYARDA: Windows Güvenlik Duvarı (modem gerekmez)
+   Bu adım, DSN Agent’ın internetten gelen bağlantıları kabul etmesi içindir.
+   Modem arayüzüne girmeniz gerekmez.
+
+   a) Kurulumdan hemen sonra Windows bir uyarı gösterdiyse:
+      "Erişime izin ver" deyin ve mümkünse yalnızca "Özel ağlar"ı işaretleyin.
+
+   b) Uyarı çıkmadıysa veya emin olmak istiyorsanız:
+      • Klavyede Windows tuşuna basın, şunu yazın:  Windows Güvenlik Duvarı
+      • "Windows Defender Güvenlik Duvarı" uygulamasını açın.
+      • Solda "Gelişmiş ayarlar"a tıklayın.
+      • Solda "Gelen Kuralları", sağda "Yeni Kural…" seçin.
+      • Kural türü: "Bağlantı noktası" → İleri.
+      • TCP ve "Belirli yerel bağlantı noktaları" → kutuya şunu yazın: 7777 → İleri.
+      • "Bağlantıya izin ver" → İleri.
+      • Profillerde "Özel" işaretli kalsın (genelde ev Wi‑Fi özel sayılır) → İleri.
+      • İsim örneği: DSN Agent 7777 → Sonlandır.
+
+   c) Agent programına izin (bazı bilgisayarlarda yeterlidir):
+      • Yine Gelişmiş ayarlar → "Gelen Kuralları" yerine bazen
+        Denetim Masası → Windows Defender Güvenlik Duvarı →
+        "Bir uygulamaya veya özelliğe izin ver" yolu da kullanılabilir.
+      • Listede "DSN" veya "dsn-agent" görürseniz, Özel ağ için işaretli olduğundan
+        emin olun.
+
+   Not: İnternet servis sağlayıcısı veya paylaşımlı ağlarda, sadece bilgisayar
+   ayarı yetmeyebilir; bu durumda ağ yöneticisi veya modem erişimi olan biri
+   gerekebilir — çoğu kullanıcı için yukarıdaki Windows adımları yeterlidir.
+
+YARDIM
+-------
+
+Sorun olursa DSN proje yöneticisiyle iletişime geçin.
+
+================================================================================

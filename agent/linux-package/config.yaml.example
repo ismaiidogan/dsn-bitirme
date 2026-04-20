@@ -1,0 +1,8 @@
+server_url: "http://localhost:8000"
+auth_token: "<JWT_TOKEN>"    # /api/v1/auth/login'den aldığınız access token
+storage_path: "/path/to/DSN-Storage"
+quota_gb: 100
+bandwidth_limit_mbps: 0      # Eski upload limiti (geriye dönük) - 0 = sınırsız
+total_bandwidth_limit_mbps: 0  # Toplam upload+download limiti (0 = sınırsız)
+listen_port: 7777
+# node_id ve node_token kayıt sonrası otomatik eklenir
