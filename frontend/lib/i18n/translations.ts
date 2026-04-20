@@ -100,7 +100,7 @@ export const translations = {
       uploadRetry: "Tekrar Dene",
       newUpload: "Yeni Dosya Yükle",
       backDashboard: "Dashboard'a Dön",
-      estimated: "{raw} → tahminen ~{compressed} (zstd ile). Gerçek oran dosya türüne göre değişebilir.",
+      estimated: "{raw} → tahminen ~{compressed} (dosya türüne göre). Gerçek oran yükleme sonunda kesinleşir.",
     },
     settings: {
       title: "Hesap Ayarları",
@@ -327,7 +327,7 @@ export const translations = {
       uploadRetry: "Retry",
       newUpload: "Upload New File",
       backDashboard: "Back to Dashboard",
-      estimated: "{raw} → estimated ~{compressed} (with zstd). Actual ratio may vary by file type.",
+      estimated: "{raw} → estimated ~{compressed} (by file type). Final ratio is confirmed after upload.",
     },
     settings: {
       title: "Account Settings",

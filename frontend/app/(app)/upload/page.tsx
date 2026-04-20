@@ -22,6 +22,52 @@ interface ChunkProgress {
   status: "pending" | "uploading" | "done" | "error";
 }
 
+function estimateCompressedSize(file: File): number {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const mime = (file.type || "").toLowerCase();
+
+  let ratio = 0.75;
+
+  const likelyAlreadyCompressedExt = new Set([
+    "zip", "rar", "7z", "gz", "bz2", "xz",
+    "jpg", "jpeg", "png", "gif", "webp", "heic",
+    "mp3", "aac", "ogg", "mp4", "mkv", "mov", "avi",
+    "pdf", "docx", "xlsx", "pptx",
+  ]);
+  const highlyCompressibleExt = new Set([
+    "txt", "csv", "json", "xml", "html", "css", "js", "ts", "md", "log",
+  ]);
+
+  if (
+    likelyAlreadyCompressedExt.has(ext) ||
+    mime.startsWith("image/") ||
+    mime.startsWith("audio/") ||
+    mime.startsWith("video/")
+  ) {
+    ratio = 0.95;
+  } else if (
+    highlyCompressibleExt.has(ext) ||
+    mime.startsWith("text/") ||
+    mime.includes("json") ||
+    mime.includes("xml")
+  ) {
+    ratio = 0.58;
+  } else if (ext === "doc" || ext === "xls" || ext === "ppt") {
+    ratio = 0.68;
+  }
+
+  // Small files are less predictable; avoid overly optimistic estimates.
+  if (file.size < 16 * 1024) {
+    ratio = Math.max(ratio, 0.9);
+  } else if (file.size < 64 * 1024) {
+    ratio = Math.max(ratio, 0.82);
+  }
+
+  // Compression may occasionally be slightly larger due to stream overhead.
+  const estimated = Math.round(file.size * ratio);
+  return Math.max(estimated, 256);
+}
+
 async function compressChunk(plaintext: ArrayBuffer): Promise<ArrayBuffer> {
   if (typeof CompressionStream === "undefined") {
     return plaintext;
@@ -69,7 +115,7 @@ export default function UploadPage() {
   }, []);
 
   const chunkCount = file ? Math.ceil(file.size / CHUNK_SIZE) : 0;
-  const estimatedCompressedSize = file ? Math.round(file.size * 0.7) : 0;
+  const estimatedCompressedSize = file ? estimateCompressedSize(file) : 0;
 
   const handleUpload = async () => {
     if (!file) return;
