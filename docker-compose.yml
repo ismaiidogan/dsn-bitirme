@@ -58,7 +58,11 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000}
+        NEXT_PUBLIC_AGENT_WINDOWS_URL: ${NEXT_PUBLIC_AGENT_WINDOWS_URL:-}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -72,7 +76,8 @@ services:
       retries: 3
       start_period: 15s
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000}
+      NEXT_PUBLIC_AGENT_WINDOWS_URL: ${NEXT_PUBLIC_AGENT_WINDOWS_URL:-}
 
 volumes:
   postgres_data:

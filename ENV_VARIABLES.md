@@ -24,6 +24,20 @@ Bu belge, DSN projesinde kullanılan ortam değişkenlerini listeler. **Docker C
 | `HEARTBEAT_INTERVAL_SEC` | Backend | Hayır | `30` | Node heartbeat aralığı (saniye). |
 | `RE_REPLICATION_CHECK_MIN` | Backend | Hayır | `5` | Re-replication kontrol aralığı (dakika). |
 | `NEXT_PUBLIC_API_URL` | Frontend (build + runtime) | Hayır | `http://backend:8000` | Backend API adresi. Compose ile çalışırken tarayıcı backend'e bu URL üzerinden istek atar; production'da kendi domain'inizi yazın. |
+| `NEXT_PUBLIC_AGENT_WINDOWS_URL` | Frontend (build + runtime) | Hayır | boş | `/agent` sayfasındaki Windows indirme bağlantısı. Örnek: `https://storemyfile.com/downloads/dsn-agent-windows.zip` veya bir release URL'si. |
+
+---
+
+## Üretim URL örnekleri (.com ve .com.tr)
+
+Teknik yapı aynıdır; yalnızca alan adı uzantısı değişir.
+
+| Senaryo | `CORS_ORIGINS` (örnek) | `NEXT_PUBLIC_API_URL` (örnek) |
+|--------|---------------------------|-------------------------------|
+| Tek site, `www` | `https://www.ornek.com` veya `https://www.ornek.com.tr` | `https://api.ornek.com` veya `https://api.ornek.com.tr` |
+| Kök + `www` ikisi de | `https://ornek.com.tr,https://www.ornek.com.tr` | Yukarıdaki gibi API host’u |
+
+Tarayıcıda yazdığınız origin (şema + host + port), `CORS_ORIGINS` içinde birebir bulunmalıdır. HTTPS + Web Crypto için bkz. `GCP_KURULUM_REHBERI.md` bölüm 14–16.
 
 ---
 

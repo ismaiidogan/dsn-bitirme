@@ -11,26 +11,30 @@ const PLATFORMS = [
   {
     name: "Windows",
     icon: "🪟",
-    file: "dsn-agent.exe",
+    file: "dsn-agent-windows.zip",
     cmd: ".\\dsn-agent.exe",
+    downloadUrl: process.env.NEXT_PUBLIC_AGENT_WINDOWS_URL ?? "",
   },
   {
     name: "macOS (Intel)",
     icon: "🍎",
     file: "dsn-agent-mac-intel",
     cmd: "./dsn-agent-mac-intel",
+    downloadUrl: "",
   },
   {
     name: "macOS (Apple Silicon)",
     icon: "🍎",
     file: "dsn-agent-mac-arm64",
     cmd: "./dsn-agent-mac-arm64",
+    downloadUrl: "",
   },
   {
     name: "Linux",
     icon: "🐧",
     file: "dsn-agent-linux",
     cmd: "./dsn-agent-linux",
+    downloadUrl: "",
   },
 ];
 
@@ -41,7 +45,9 @@ const STEPS = [
   "Bu sayfada bağlantı durumunu kontrol edin",
 ];
 
-const CONFIG_YAML = `server_url: "http://localhost:8000"
+const AGENT_SERVER_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+const CONFIG_YAML = `server_url: "${AGENT_SERVER_URL}"
 auth_token: "<JWT_TOKEN>"
 storage_path: "/path/to/DSN-Storage"
 quota_gb: 100
@@ -121,21 +127,32 @@ export default function AgentPage() {
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
             {PLATFORMS.map((p) => (
-              <div
+              <a
                 key={p.name}
-                className="flex items-center gap-3 rounded-lg border border-border p-4 opacity-60 cursor-not-allowed"
-                title="Yakında"
+                href={p.downloadUrl || undefined}
+                download={Boolean(p.downloadUrl)}
+                target={p.downloadUrl ? "_blank" : undefined}
+                rel={p.downloadUrl ? "noopener noreferrer" : undefined}
+                className={`flex items-center gap-3 rounded-lg border border-border p-4 ${
+                  p.downloadUrl
+                    ? "hover:border-primary/50 hover:bg-accent/40 cursor-pointer transition-colors"
+                    : "opacity-60 cursor-not-allowed"
+                }`}
+                title={p.downloadUrl ? "İndir" : "Yakında"}
+                onClick={(e) => {
+                  if (!p.downloadUrl) e.preventDefault();
+                }}
               >
                 <span className="text-2xl">{p.icon}</span>
                 <div>
                   <p className="font-medium text-sm">{p.name}</p>
                   <p className="text-xs text-muted-foreground font-mono">{p.file}</p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            * Agent binary'leri build aşamasında olup yakında yayınlanacaktır.
+            * Windows indirmesi için `NEXT_PUBLIC_AGENT_WINDOWS_URL` tanımlayın. Diğer platformlar yakında.
           </p>
         </CardContent>
       </Card>

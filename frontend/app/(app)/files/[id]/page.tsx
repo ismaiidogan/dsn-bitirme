@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
 
 export default function FileDetailPage() {
   const params = useParams();
@@ -29,6 +30,10 @@ export default function FileDetailPage() {
 
   const handleDownload = async () => {
     if (!file) return;
+    if (!webCryptoAvailable()) {
+      toast.error(WEB_CRYPTO_BLOCKED_MSG);
+      return;
+    }
     setDownloading(true);
     try {
       const manifest = await filesApi.downloadManifest(file.id);

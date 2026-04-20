@@ -299,6 +299,8 @@ Kendi bilgisayarınızdan tarayıcıda:
 - Hata alırsanız `.env` içindeki `CORS_ORIGINS` tam olarak tarayıcıda yazdığınız adresle (protokol + IP + port) eşleşmeli.
 - Değişiklikten sonra: `docker compose up -d --build` (veya en azından backend’i yeniden başlatın).
 
+**Dosya yükleme / indirme (Web Crypto):** Tarayıcıda istemci tarafı şifreleme için `crypto.subtle` kullanılır; bu API yalnızca **güvenli bağlamda** çalışır (**HTTPS** veya **localhost**). **`http://HAM_IP:3000`** ile yükleme çoğu tarayıcıda **çalışmaz**. Üretim veya gerçek test için [Bölüm 16](#16-i̇steğe-bağlı-alan-adı-ve-https) ile HTTPS kullanın veya geliştirme sırasında `http://localhost:3000` üzerinden deneyin.
+
 ---
 
 ## 15. Agent kurulumu (aynı VM’de)
@@ -323,10 +325,31 @@ sudo ufw enable
 
 ## 16. İsteğe bağlı: Alan adı ve HTTPS
 
-1. Alan adınızın DNS’inde **A kaydı** → GCP VM **External IP**.
-2. VM’de **Caddy** veya **nginx** ile `443` üzerinden `127.0.0.1:3000`’e **reverse proxy**.
-3. `.env`: `CORS_ORIGINS=https://alanadiniz.com`
-4. `docker compose up -d --build`
+### .com.tr almadan önce (kayıt şartları)
+
+Alan adı kuralları **TRABIS** döneminde güncellenebilir; **kesin metin ve fiyat** için satın almayı düşündüğünüz **registrar’ın** (ör. arama: “com.tr kayıt koşulları” + firma adı) bilgi sayfasını okuyun. Genel olarak `.com.tr`, teknik olarak `.com` ile aynı DNS/HTTPS modelini kullanır; fark çoğunlukla **ticari koşullar, yenileme ve destek** tarafındadır.
+
+### Teknik taraf (.com ile aynı mantık)
+
+1. DNS’te **A kaydı** (ve isteğe bağlı **AAAA**) → GCP VM **External IP**.
+2. Yaygın düzen:
+   - **Web:** kök `ornek.com.tr` ve/veya `www.ornek.com.tr` → reverse proxy → `127.0.0.1:3000`
+   - **API:** `api.ornek.com.tr` → `127.0.0.1:8000` *(aynı VM’de nginx/Caddy ile iki `server` / iki host bloğu)*  
+   Tek origin’de birleştirmek (yalnızca `https://www.ornek.com.tr` + API aynı host üzerinden `/api`) da mümkündür; tercih mimarinize bağlıdır.
+3. VM’de **Caddy** veya **nginx** ile **443** ve Let’s Encrypt (veya registrar SSL’i).
+4. `.env` — tarayıcıda **gerçekten açtığınız** origin’leri yazın (protokol + host + port):
+
+```env
+# Örnek: hem kök hem www kullanıyorsanız ikisini de listeleyin
+CORS_ORIGINS=https://ornek.com.tr,https://www.ornek.com.tr
+```
+
+Yalnızca tek adres kullanıyorsanız: `CORS_ORIGINS=https://www.ornek.com.tr`
+
+5. Frontend public API adresi: `NEXT_PUBLIC_API_URL=https://api.ornek.com.tr` *(API alt alanı kullanıyorsanız)* veya tek domain üzerinden proxy kullanıyorsanız o URL.
+6. `docker compose up -d --build` (veya backend/frontend yeniden build).
+
+**Özet:** `.com.tr` seçmek, HTTPS sertifikası, CORS ve `www` / `api` alt alan planını **`.com` ile aynı şekilde** yürütmenizi sağlar; değişen taraf çoğunlukla registrar’daki kayıt metnidir.
 
 Detaylı örnek için proje içi `VPS_KURULUM_REHBERI.md` Bölüm 10’a bakabilirsiniz.
 

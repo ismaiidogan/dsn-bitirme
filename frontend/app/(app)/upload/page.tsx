@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, FileIcon, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { files as filesApi, uploadChunkToNode } from "@/lib/api";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes } from "@/lib/utils";
+import { webCryptoAvailable, WEB_CRYPTO_BLOCKED_MSG } from "@/lib/webCrypto";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
 const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
@@ -29,6 +30,11 @@ export default function UploadPage() {
   const [dragOver, setDragOver] = useState(false);
   const [replication, setReplication] = useState<1 | 2 | 3>(2);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [cryptoReady, setCryptoReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setCryptoReady(webCryptoAvailable());
+  }, []);
 
   const selectFile = (f: File) => {
     if (f.size > MAX_FILE_SIZE) {
@@ -52,6 +58,11 @@ export default function UploadPage() {
 
   const handleUpload = async () => {
     if (!file) return;
+    if (!webCryptoAvailable()) {
+      setErrorMsg(WEB_CRYPTO_BLOCKED_MSG);
+      setState("error");
+      return;
+    }
     setState("uploading");
     setErrorMsg("");
 
@@ -143,6 +154,13 @@ export default function UploadPage() {
         <h1 className="text-2xl font-bold">Dosya Yükle</h1>
         <p className="text-muted-foreground text-sm mt-1">Maksimum 5 GB</p>
       </div>
+
+      {cryptoReady === false && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+          <strong className="block text-amber-50 mb-1">Şifreleme için HTTPS gerekli</strong>
+          {WEB_CRYPTO_BLOCKED_MSG}
+        </div>
+      )}
 
       {/* Replication factor selection */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -284,7 +302,11 @@ export default function UploadPage() {
 
       {/* Upload button */}
       {file && state === "idle" && (
-        <Button className="w-full" onClick={handleUpload}>
+        <Button
+          className="w-full"
+          onClick={handleUpload}
+          disabled={cryptoReady === false}
+        >
           <Upload className="h-4 w-4" />
           Yüklemeye Başla
         </Button>

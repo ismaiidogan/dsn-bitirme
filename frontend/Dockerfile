@@ -13,6 +13,8 @@ ENV NEXT_TELEMETRY_DISABLED 1
 # Backend URL for server-side API proxy (rewrites). Required at build time for standalone.
 ARG NEXT_PUBLIC_API_URL=http://backend:8000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG NEXT_PUBLIC_AGENT_WINDOWS_URL=
+ENV NEXT_PUBLIC_AGENT_WINDOWS_URL=${NEXT_PUBLIC_AGENT_WINDOWS_URL}
 RUN npm run build
 
 FROM node:20-alpine AS runner
@@ -21,6 +23,7 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NEXT_PUBLIC_API_URL=http://backend:8000
+ENV NEXT_PUBLIC_AGENT_WINDOWS_URL=
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

@@ -66,7 +66,7 @@ export default function P2_ServerAddress({ state, update, onNext, onBack }: Prop
           <label>Sunucu Adresi</label>
           <input
             type="url"
-            placeholder="http://192.168.1.100:8000"
+            placeholder="https://api.storemyfile.com"
             value={state.serverUrl}
             onChange={(e) => onChange(e.target.value)}
             className={errMsg ? "err" : ""}
@@ -75,7 +75,7 @@ export default function P2_ServerAddress({ state, update, onNext, onBack }: Prop
           {errMsg && <p className="err-msg">✗ {errMsg}</p>}
           {checked && <p className="hint" style={{ color: "var(--success)" }}>✓ Sunucuya bağlantı başarılı</p>}
           <p className="hint" style={{ marginTop: checked || errMsg ? 4 : undefined }}>
-            Örnek: http://192.168.1.100:8000 &nbsp;·&nbsp; https://dsn.sirketim.com
+            Örnek: https://api.storemyfile.com &nbsp;·&nbsp; https://dsn.sirketim.com
           </p>
         </div>
 
