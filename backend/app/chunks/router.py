@@ -35,8 +35,13 @@ async def confirm_chunk(
     # Update chunk hash from the stored data
     chunk_result = await db.execute(select(Chunk).where(Chunk.id == chunk_id))
     chunk = chunk_result.scalar_one_or_none()
-    if chunk and chunk.sha256_hash == "pending":
-        chunk.sha256_hash = body.sha256_hash
+    if chunk:
+        if chunk.sha256_hash == "pending":
+            chunk.sha256_hash = body.sha256_hash
+        # Persist actual stored chunk size reported by node (after compression/encryption).
+        chunk.size_bytes = body.size_bytes
+        original_size = chunk.original_size_bytes or body.size_bytes
+        chunk.is_compressed = body.size_bytes < original_size
 
     replica.status = "stored"
     replica.stored_at = datetime.now(timezone.utc)
