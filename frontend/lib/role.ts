@@ -1,6 +1,7 @@
 export type RolePreference = "consumer" | "provider" | "both";
 
 const ROLE_KEY = "dsn_role";
+export const ROLE_CHANGED_EVENT = "dsn:role-changed";
 
 export function getRolePreference(): RolePreference | null {
   if (typeof window === "undefined") return null;
@@ -14,6 +15,7 @@ export function getRolePreference(): RolePreference | null {
 export function setRolePreference(role: RolePreference) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(ROLE_KEY, role);
+  window.dispatchEvent(new CustomEvent(ROLE_CHANGED_EVENT, { detail: { role } }));
 }
 
 export function getRoleHomePath(role: RolePreference | null): string {

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { getRolePreference, RolePreference } from "@/lib/role";
+import { getRolePreference, RolePreference, ROLE_CHANGED_EVENT } from "@/lib/role";
 import { useLanguage } from "@/contexts/language-context";
 
 const navItems = [
@@ -35,9 +35,20 @@ export function Navbar() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    // Sadece client tarafında localStorage'dan okumak için
-    const pref = getRolePreference();
-    setRole(pref);
+    const syncRole = () => setRole(getRolePreference());
+    syncRole();
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "dsn_role") syncRole();
+    };
+    const onRoleChanged = () => syncRole();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(ROLE_CHANGED_EVENT, onRoleChanged);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(ROLE_CHANGED_EVENT, onRoleChanged);
+    };
   }, []);
 
   const handleLogout = async () => {
