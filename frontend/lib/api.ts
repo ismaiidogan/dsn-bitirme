@@ -1,5 +1,6 @@
 // In-memory access token store (never localStorage)
 let accessToken: string | null = null;
+const DIRECT_API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
@@ -262,6 +263,13 @@ export class ApiError extends Error {
   }
 }
 
+function directApiUrl(path: string): string {
+  // For large binary chunk transfers, bypass Next rewrite proxy to avoid
+  // intermittent upstream ECONNRESET during proxying.
+  if (DIRECT_API_BASE) return `${DIRECT_API_BASE}/api/v1${path}`;
+  return `/api/v1${path}`;
+}
+
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
 export const auth = {
@@ -316,21 +324,54 @@ export const files = {
     }),
 
   uploadChunk: (chunk_id: string, encryptedData: ArrayBuffer, sha256Hash: string) =>
-    apiFetch<{ status: string; node_id?: string }>(`/files/chunks/${chunk_id}/upload`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "X-Chunk-Hash": sha256Hash,
-        "X-Chunk-Size": encryptedData.byteLength.toString(),
-      },
-      body: encryptedData,
-    }),
+    (async () => {
+      const buildHeaders = (): Record<string, string> => {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/octet-stream",
+          "X-Chunk-Hash": sha256Hash,
+          "X-Chunk-Size": encryptedData.byteLength.toString(),
+        };
+        if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+        return headers;
+      };
+
+      let res = await fetch(directApiUrl(`/files/chunks/${chunk_id}/upload`), {
+        method: "POST",
+        headers: buildHeaders(),
+        body: encryptedData,
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+          res = await fetch(directApiUrl(`/files/chunks/${chunk_id}/upload`), {
+            method: "POST",
+            headers: buildHeaders(),
+            body: encryptedData,
+            credentials: "include",
+          });
+        }
+      }
+
+      if (!res.ok) {
+        let detail = "Request failed";
+        try {
+          const body = await res.json();
+          detail = body?.detail ?? detail;
+        } catch {
+          // no-op
+        }
+        throw new ApiError(res.status, detail);
+      }
+      return (await res.json()) as { status: string; node_id?: string };
+    })(),
 
   downloadChunk: async (chunk_id: string) => {
     const headers: Record<string, string> = {};
     if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
-    let res = await fetch(`/api/v1/files/chunks/${chunk_id}/download`, {
+    let res = await fetch(directApiUrl(`/files/chunks/${chunk_id}/download`), {
       method: "GET",
       headers,
       credentials: "include",
@@ -341,7 +382,7 @@ export const files = {
       if (refreshed) {
         const retryHeaders: Record<string, string> = {};
         if (accessToken) retryHeaders["Authorization"] = `Bearer ${accessToken}`;
-        res = await fetch(`/api/v1/files/chunks/${chunk_id}/download`, {
+        res = await fetch(directApiUrl(`/files/chunks/${chunk_id}/download`), {
           method: "GET",
           headers: retryHeaders,
           credentials: "include",
