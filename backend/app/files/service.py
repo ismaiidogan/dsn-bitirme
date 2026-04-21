@@ -418,6 +418,7 @@ async def relay_chunk_upload(
 
     errors: list[str] = []
     successful_nodes: list[str] = []
+    dispatched_nodes: list[str] = []
     payload_b64 = base64.b64encode(encrypted_data).decode("ascii")
     for replica in replicas:
         node = nodes.get(replica.node_id)
@@ -435,12 +436,22 @@ async def relay_chunk_upload(
                     "data_base64": payload_b64,
                 },
             )
-            if sent and await _wait_for_chunk_replica_stored(db, chunk_uuid, replica.node_id):
-                successful_nodes.append(node_id)
-                continue
+            if sent:
+                dispatched_nodes.append(node_id)
+                # Once we have at least one successful replica, do not block the
+                # request on additional replicas; confirmations can arrive
+                # asynchronously and update statuses.
+                if successful_nodes:
+                    continue
+                if await _wait_for_chunk_replica_stored(db, chunk_uuid, replica.node_id):
+                    successful_nodes.append(node_id)
+                    continue
             errors.append(f"{node_id} -> websocket relay failed")
         else:
             errors.append(f"{node_id} -> websocket not connected")
+
+        if successful_nodes:
+            continue
 
         legacy_ok = await _relay_chunk_via_http_legacy(
             node_url=node.url,
@@ -462,6 +473,7 @@ async def relay_chunk_upload(
             "stored_replicas": len(successful_nodes),
             "requested_replicas": len(replicas),
             "node_ids": successful_nodes,
+            "dispatched_nodes": dispatched_nodes,
         }
 
     raise ValueError(
