@@ -24,6 +24,7 @@ func New(basePath string, quotaBytes int64) (*Manager, error) {
 	if err := os.MkdirAll(basePath, 0755); err != nil {
 		return nil, fmt.Errorf("creating storage dir: %w", err)
 	}
+	_ = protectDir(basePath)
 	m := &Manager{basePath: basePath, quotaBytes: quotaBytes}
 	if err := m.recomputeUsed(); err != nil {
 		return nil, err
@@ -51,16 +52,18 @@ func (m *Manager) Store(chunkID string, data []byte) (sha256Hex string, err erro
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return "", err
 	}
+	_ = protectDir(filepath.Dir(path))
 
 	// Write atomically via temp file
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := os.WriteFile(tmp, data, 0600); err != nil {
 		return "", err
 	}
 	if err := os.Rename(tmp, path); err != nil {
 		os.Remove(tmp)
 		return "", err
 	}
+	_ = protectFile(path)
 
 	m.usedBytes.Add(size)
 
@@ -92,6 +95,7 @@ func (m *Manager) Delete(chunkID string) error {
 		return err
 	}
 	size := info.Size()
+	_ = unprotectFile(path)
 	if err := os.Remove(path); err != nil {
 		return err
 	}
