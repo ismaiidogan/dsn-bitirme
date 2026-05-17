@@ -13,12 +13,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 
-function centsToMoney(cents: number, currency: string) {
+function formatPreciseMoney(cents: number, currency: string, usageGbHour?: number, pricePerGbHourCents?: number) {
+  // Use exact mathematical value for micro-transactions if provided
+  let exactCents = cents;
+  if (usageGbHour !== undefined && pricePerGbHourCents !== undefined) {
+    exactCents = usageGbHour * pricePerGbHourCents;
+  }
+  
+  const dollars = exactCents / 100;
+  
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
-  }).format(cents / 100);
+    maximumFractionDigits: dollars > 0 && dollars < 0.01 ? 5 : 2,
+  }).format(dollars);
 }
 
 export default function BillingPage() {
@@ -134,7 +143,12 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent>
             <p className="font-semibold">
-              {centsToMoney(summary?.estimate.estimated_amount_cents ?? 0, summary?.estimate.currency ?? "USD")}
+              {formatPreciseMoney(
+                summary?.estimate.estimated_amount_cents ?? 0, 
+                summary?.estimate.currency ?? "USD",
+                summary?.estimate.usage_gb_hour,
+                activePlan?.price_per_gb_hour_cents ?? 2
+              )}
             </p>
             {summary?.latest_invoice_status && (
               <p className="mt-1 text-xs text-muted-foreground">
@@ -173,7 +187,14 @@ export default function BillingPage() {
                     <tr key={inv.id}>
                       <td className="px-4 py-2 font-medium">{inv.invoice_no}</td>
                       <td className="px-4 py-2">{t("billing.gbHour", { value: inv.usage_gb_hour })}</td>
-                      <td className="px-4 py-2">{centsToMoney(inv.amount_cents, "USD")}</td>
+                      <td className="px-4 py-2">
+                        {formatPreciseMoney(
+                          inv.amount_cents, 
+                          "USD", 
+                          inv.usage_gb_hour, 
+                          activePlan?.price_per_gb_hour_cents ?? 2
+                        )}
+                      </td>
                       <td className="px-4 py-2">
                         <Badge variant={inv.status === "paid" ? "success" : "warning"}>{inv.status}</Badge>
                       </td>

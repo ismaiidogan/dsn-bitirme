@@ -11,12 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatDate } from "@/lib/utils";
 
-function centsToMoney(cents: number, currency: string) {
+function formatPreciseMoney(cents: number, currency: string, bytesStored?: number) {
+  let exactCents = cents;
+  if (bytesStored !== undefined) {
+    const gb = bytesStored / (1024 * 1024 * 1024);
+    // Provider payout is 1 cent per GB-hour
+    exactCents = gb * 1; 
+  }
+  
+  const dollars = exactCents / 100;
+  
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
-  }).format(cents / 100);
+    maximumFractionDigits: dollars > 0 && dollars < 0.01 ? 5 : 2,
+  }).format(dollars);
 }
 
 export default function EarningsPage() {
@@ -96,7 +106,11 @@ export default function EarningsPage() {
           </CardHeader>
           <CardContent>
             <p className="font-semibold">
-              {centsToMoney(data.summary.current_period_estimated_cents, data.summary.currency)}
+              {formatPreciseMoney(
+                data.summary.current_period_estimated_cents, 
+                data.summary.currency,
+                data.summary.current_period_bytes_stored
+              )}
             </p>
           </CardContent>
         </Card>
@@ -105,7 +119,15 @@ export default function EarningsPage() {
             <CardTitle className="text-sm">{t("earnings.totalRevenue")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-semibold">{centsToMoney(data.summary.total_estimated_cents, data.summary.currency)}</p>
+            <p className="font-semibold">
+              {formatPreciseMoney(
+                data.summary.total_estimated_cents, 
+                data.summary.currency,
+                // Passing undefined for bytesStored because we don't have total bytes directly
+                // in the top level summary currently, though we could sum it.
+                // It's fine to fall back to rounded for the total if it's large.
+              )}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -133,7 +155,11 @@ export default function EarningsPage() {
                       <td className="px-4 py-2 text-muted-foreground">{formatDate(item.period_start)}</td>
                       <td className="px-4 py-2">{formatBytes(item.bytes_stored)}</td>
                       <td className="px-4 py-2">
-                        {centsToMoney(item.estimated_cents, data.summary.currency)}
+                        {formatPreciseMoney(
+                          item.estimated_cents, 
+                          data.summary.currency,
+                          item.bytes_stored
+                        )}
                       </td>
                     </tr>
                   ))}
